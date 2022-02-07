@@ -6,7 +6,7 @@ import sys
 import traceback
 
 from girder_cli_oauth_client import GirderCliOAuthClient
-from packaging.version import parse as parse_version
+from pkg_resources import parse_version
 import requests
 from requests.exceptions import RequestException
 import typer
