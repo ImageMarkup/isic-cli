@@ -42,6 +42,7 @@ setup(
         'pandas',
         'requests',
         'retryable-requests',
+        'rich',
         'typer',
     ],
     extras_require={

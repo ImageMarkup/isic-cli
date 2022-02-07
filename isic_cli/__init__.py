@@ -1,4 +1,5 @@
 from datetime import datetime
+from importlib.metadata import PackageNotFoundError, version
 import os
 import platform
 import sys
@@ -13,7 +14,11 @@ import typer
 from isic_cli.image import image
 from isic_cli.metadata import metadata
 
-__version__ = None
+try:
+    __version__ = version('isic-cli')
+except PackageNotFoundError:
+    # package is not installed
+    pass
 
 
 def get_oauth_client():
