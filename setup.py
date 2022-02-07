@@ -35,6 +35,7 @@ setup(
     packages=find_packages(),
     entry_points={'console_scripts': ['isic = isic_cli:cli']},
     install_requires=[
+        'girder-cli-oauth-client',
         'isic-metadata',
         'joblib',
         'numpy',
