@@ -13,6 +13,7 @@ import typer
 
 from isic_cli.image import image
 from isic_cli.metadata import metadata
+from isic_cli.session import get_session
 
 try:
     __version__ = version('isic-cli')
@@ -22,19 +23,27 @@ except PackageNotFoundError:
 
 
 def get_oauth_client():
-    client = GirderCliOAuthClient('https://api.isic-archive.com/oauth', '')
+    client = GirderCliOAuthClient(
+        'https://api.isic-archive.com/oauth', 'RpCzc4hFjv5gOJdM2DM2nBdokOviOh5ne63Tpn7Q'
+    )
     return client
 
 
 def login(ctx: typer.Context):
-    ctx.obj.login()
-    print('hello')
+    """Login through the ISIC Archive."""
+    if ctx.obj.auth_headers:
+        with get_session(ctx.obj.auth_headers) as session:
+            r = session.get('users/me')
+            r.raise_for_status()
+            typer.echo(f'Hello {r.json()["email"]}')
+    else:
+        ctx.obj.login()
 
 
 def make_app():
     app = typer.Typer()
-    app.add_typer(image, name='image')
-    app.add_typer(metadata, name='metadata')
+    app.add_typer(image, name='image', help='Manage images.')
+    app.add_typer(metadata, name='metadata', help='Manage metadata.')
     app.command('login')(login)
 
     @app.callback()
