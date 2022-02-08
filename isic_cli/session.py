@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from retryable_requests import RetryableSession
 
@@ -13,5 +14,8 @@ class IsicCliSession(RetryableSession):
         # )
 
 
-def get_session() -> IsicCliSession:
-    return IsicCliSession(os.environ.get('API_URL', 'https://api.isic-archive.com/api/v2/'))
+def get_session(headers: Optional[dict] = None) -> IsicCliSession:
+    session = IsicCliSession(os.environ.get('API_URL', 'https://api.isic-archive.com/api/v2/'))
+    if headers:
+        session.headers.update(headers)
+    return session
