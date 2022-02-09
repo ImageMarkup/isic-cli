@@ -15,16 +15,19 @@ from isic_cli.image import image
 from isic_cli.metadata import metadata
 from isic_cli.session import get_session
 
-try:
-    __version__ = version('isic-cli')
-except PackageNotFoundError:
-    # package is not installed
-    pass
+
+def get_version():
+    try:
+        return version('isic-cli')
+    except PackageNotFoundError:
+        # package is not installed
+        return None
 
 
 def get_oauth_client():
     client = GirderCliOAuthClient(
-        'https://api.isic-archive.com/oauth', 'RpCzc4hFjv5gOJdM2DM2nBdokOviOh5ne63Tpn7Q'
+        os.environ.get('ISIC_OAUTH_URL', 'https://api.isic-archive.com/oauth'),
+        os.environ.get('ISIC_OAUTH_CLIENT_ID', 'RpCzc4hFjv5gOJdM2DM2nBdokOviOh5ne63Tpn7Q'),
     )
     return client
 
@@ -60,10 +63,10 @@ def make_app():
 
 
 def newer_version_available():
-    if __version__ is None:
+    if get_version() is None:
         return False
 
-    this_version = parse_version(__version__)
+    this_version = parse_version(get_version())
     if this_version.is_devrelease:
         return False
 
@@ -118,7 +121,7 @@ def cli():
         typer.echo(traceback.format_exc(), err=True)
 
         # TODO: maybe use scooby?
-        typer.echo(f'isic-cli: v{__version__}', err=True)
+        typer.echo(f'isic-cli: v{get_version()}', err=True)
         typer.echo(f'python:   v{platform.python_version()}', err=True)
         typer.echo(f'time:     {datetime.utcnow().isoformat()}', err=True)
         typer.echo(f'os:       {platform.platform()}', err=True)
