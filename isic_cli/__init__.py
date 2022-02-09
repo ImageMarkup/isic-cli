@@ -50,6 +50,11 @@ def make_app():
     def main(ctx: typer.Context):
         ctx.obj = get_oauth_client()
         ctx.obj.maybe_restore_login()
+        if not ctx.obj.auth_headers:
+            typer.echo(
+                "Psst, you're logged out. Logging in with `isic login` might return more data.\n",
+                err=True,
+            )
 
     return app
 
