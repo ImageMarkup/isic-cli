@@ -14,8 +14,10 @@ from isic_cli.utils import get_images, get_num_images
 image = typer.Typer()
 
 
-def _download_image(ctx: typer.Context, image: dict, to: Path, progress, task) -> None:
-    with get_session(ctx.obj.auth_headers) as session:
+def _download_image(image: dict, to: Path, progress, task) -> None:
+    # intentionally don't pass auth headers, since these are s3 signed urls that
+    # already contain credentials.
+    with get_session() as session:
         r = session.get(image['urls']['full'], stream=True)
         r.raise_for_status()
 
@@ -67,8 +69,7 @@ def download_images(
             try:
                 with parallel_backend('threading'):
                     Parallel()(
-                        delayed(_download_image)(ctx, image, outdir, progress, task)
-                        for image in images
+                        delayed(_download_image)(image, outdir, progress, task) for image in images
                     )
             except HTTPError as e:
                 if e.response.status_code == 400 and 'query' in e.response.json():
