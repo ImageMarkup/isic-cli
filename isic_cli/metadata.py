@@ -76,6 +76,10 @@ def validate_metadata(csv_file: Path):
 def download(
     ctx: typer.Context,
     search: str = typer.Option(''),
+    collections: str = typer.Option(
+        '',
+        help='Limit the images based on a comma separated string of collection ids (see isic collection list).',  # noqa: E501
+    ),
     max_results: int = typer.Option(1_000, min=0, help='Use a value of 0 to disable the limit.'),
 ):
     """
@@ -92,11 +96,11 @@ def download(
     anatom_site_general:*torso AND image_type:dermoscopic
     """
     with get_session(ctx.obj.auth_headers) as session:
-        num_results = get_num_images(session, search)
+        num_results = get_num_images(session, search, collections)
         if max_results > 0:
             num_results = min(num_results, max_results)
 
-        images = get_images(session, search)
+        images = get_images(session, search, collections)
 
         if max_results > 0:
             images = itertools.islice(images, max_results)

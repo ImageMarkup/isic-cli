@@ -37,6 +37,10 @@ def _download_image(image: dict, to: Path, progress, task) -> None:
 def download_images(
     ctx: typer.Context,
     search: str = typer.Option(''),
+    collections: str = typer.Option(
+        '',
+        help='Limit the images based on a comma separated string of collection ids (see isic collection list).',  # noqa: E501
+    ),
     max_images: int = typer.Option(1_000, min=0, help='Use a value of 0 to disable the limit.'),
     outdir: Path = typer.Option(Path('images'), file_okay=False, dir_okay=True, writable=True),
 ):
@@ -56,12 +60,12 @@ def download_images(
     outdir.mkdir(exist_ok=True)
     with Progress() as progress:
         with get_session(ctx.obj.auth_headers) as session:
-            num_images = get_num_images(session, search)
+            num_images = get_num_images(session, search, collections)
             if max_images > 0:
                 num_images = min(num_images, max_images)
 
             task = progress.add_task(f'Downloading images ({num_images} total)', total=num_images)
-            images = get_images(session, search)
+            images = get_images(session, search, collections)
 
             if max_images > 0:
                 images = itertools.islice(images, max_images)
