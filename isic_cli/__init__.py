@@ -1,5 +1,6 @@
 from datetime import datetime
 from importlib.metadata import PackageNotFoundError, version
+import logging
 import os
 import platform
 import sys
@@ -52,7 +53,15 @@ def make_app():
     app.command('login')(login)
 
     @app.callback()
-    def main(ctx: typer.Context):
+    def main(ctx: typer.Context, verbose: bool = False):
+        if verbose:
+            from http.client import HTTPConnection
+
+            requests_log = logging.getLogger('requests.packages.urllib3')
+            HTTPConnection.debuglevel = 1
+            requests_log.addHandler(logging.StreamHandler(sys.stderr))
+            requests_log.setLevel(logging.DEBUG)
+
         ctx.obj = get_oauth_client()
         ctx.obj.maybe_restore_login()
         if not ctx.obj.auth_headers:
