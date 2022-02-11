@@ -3,6 +3,16 @@ from typing import Iterable
 from isic_cli.session import IsicCliSession
 
 
+def get_collections(session: IsicCliSession) -> Iterable[dict]:
+    next_page = 'collections?limit=1'
+
+    while next_page:
+        r = session.get(next_page)
+        r.raise_for_status()
+        yield from r.json()['results']
+        next_page = r.json()['next']
+
+
 def get_images(session: IsicCliSession, search: str) -> Iterable[dict]:
     next_page = f'images/search/?query={search}'
 

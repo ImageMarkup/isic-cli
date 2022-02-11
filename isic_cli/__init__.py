@@ -11,6 +11,7 @@ import requests
 from requests.exceptions import RequestException
 import typer
 
+from isic_cli.collection import collection
 from isic_cli.image import image
 from isic_cli.metadata import metadata
 from isic_cli.session import get_session
@@ -45,6 +46,7 @@ def login(ctx: typer.Context):
 
 def make_app():
     app = typer.Typer()
+    app.add_typer(collection, name='collection', help='Manage collections.')
     app.add_typer(image, name='image', help='Manage images.')
     app.add_typer(metadata, name='metadata', help='Manage metadata.')
     app.command('login')(login)
