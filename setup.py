@@ -8,7 +8,6 @@ with readme_file.open() as f:
 
 setup(
     name='isic-cli',
-    version='0.0.1',
     description='',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -33,9 +32,10 @@ setup(
     ],
     python_requires='>=3.9',
     packages=find_packages(),
-    entry_points={'console_scripts': ['isic = isic_cli:cli']},
+    entry_points={'console_scripts': ['isic = isic_cli.cli:main']},
     install_requires=[
         'girder-cli-oauth-client',
+        'humanize',
         'isic-metadata',
         'joblib',
         'numpy',

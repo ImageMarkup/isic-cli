@@ -3,8 +3,11 @@ import csv
 import itertools
 from pathlib import Path
 import sys
-from typing import OrderedDict
+from typing import OrderedDict, Union
 
+import click
+from click.types import IntRange
+from humanize import intcomma
 from isic_metadata.metadata import MetadataRow
 from isic_metadata.utils import get_unstructured_columns
 import numpy as np
@@ -12,19 +15,27 @@ import pandas as pd
 from rich.console import Console
 from rich.progress import Progress, track
 from rich.table import Table
-import typer
 
-from isic_cli.session import get_session
-from isic_cli.utils import get_images, get_num_images
+from isic_cli.cli.context import IsicContext
+from isic_cli.cli.types import CommaSeparatedIdentifiers, SearchString
+from isic_cli.cli.utils import suggest_guest_login
+from isic_cli.io.http import get_images, get_num_images
 
-metadata = typer.Typer()
+
+@click.group(short_help='Manage metadata.')
+@click.pass_obj
+def metadata(obj):
+    pass
 
 
 @metadata.command(name='validate')
-def validate_metadata(csv_file: Path):
+@click.argument(
+    'csv_path', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True)
+)
+def validate(csv_path: Path):
     """Validate metadata from a local csv."""
     console = Console()
-    with open(csv_file) as csv:
+    with open(csv_path) as csv:
         df = pd.read_csv(csv, header=0)
 
     # pydantic expects None for the absence of a value, not NaN
@@ -61,6 +72,8 @@ def validate_metadata(csv_file: Path):
 
         console.print(table)
 
+        sys.exit(1)
+
     unstructured_columns = get_unstructured_columns(df)
     if unstructured_columns:
         table = Table(title='Unrecognized Fields')
@@ -73,15 +86,27 @@ def validate_metadata(csv_file: Path):
 
 
 @metadata.command(name='download')
-def download(
-    ctx: typer.Context,
-    search: str = typer.Option(''),
-    collections: str = typer.Option(
-        '',
-        help='Limit the images based on a comma separated string of collection ids (see isic collection list).',  # noqa: E501
+@click.option('-s', '--search', type=SearchString(), help='e.g. "diagnosis:melanoma AND age:50"')
+@click.option(
+    '-c',
+    '--collections',
+    type=CommaSeparatedIdentifiers(),
+    help=(
+        'Limit the images based on a comma separated list of collection ids e.g. 2,17,42. '
+        'See isic collection list to obtain ids.'
     ),
-    max_results: int = typer.Option(1_000, min=0, help='Use a value of 0 to disable the limit.'),
-):
+)
+@click.option(
+    '-l',
+    '--limit',
+    default=1_000,
+    metavar='INTEGER',
+    type=IntRange(min=0),
+    help='Use a value of 0 to disable the limit.',
+)
+@click.pass_obj
+@suggest_guest_login
+def download(ctx: IsicContext, search: Union[None, str], collections: Union[None, str], limit: int):
     """
     Download metadata from the ISIC Archive.
 
@@ -95,30 +120,29 @@ def download(
 
     anatom_site_general:*torso AND image_type:dermoscopic
     """
-    with get_session(ctx.obj.auth_headers) as session:
-        num_results = get_num_images(session, search, collections)
-        if max_results > 0:
-            num_results = min(num_results, max_results)
+    num_results = get_num_images(ctx.session, search, collections)
+    if limit > 0:
+        num_results = min(num_results, limit)
 
-        images = get_images(session, search, collections)
+    images = get_images(ctx.session, search, collections)
 
-        if max_results > 0:
-            images = itertools.islice(images, max_results)
+    if limit > 0:
+        images = itertools.islice(images, limit)
 
-        with Progress(console=Console(file=sys.stderr)) as progress:
-            task = progress.add_task(
-                f'Fetching metadata records ({num_results})', total=num_results
-            )
+    with Progress(console=Console(file=sys.stderr)) as progress:
+        task = progress.add_task(
+            f'Downloading metadata records ({intcomma( num_results )} total)', total=num_results
+        )
 
-            fieldnames = set()
-            records = []
-            for image in images:
-                fieldnames |= set(image.get('metadata', {}).keys())
-                records.append({**{'isic_id': image['isic_id']}, **image['metadata']})
-                progress.update(task, advance=1)
+        fieldnames = set()
+        records = []
+        for image in images:
+            fieldnames |= set(image.get('metadata', {}).keys())
+            records.append({**{'isic_id': image['isic_id']}, **image['metadata']})
+            progress.update(task, advance=1)
 
-        if records:
-            writer = csv.DictWriter(sys.stdout, ['isic_id'] + list(sorted(fieldnames)))
-            writer.writeheader()
-            for record in records:
-                writer.writerow(record)
+    if records:
+        writer = csv.DictWriter(sys.stdout, ['isic_id'] + list(sorted(fieldnames)))
+        writer.writeheader()
+        for record in records:
+            writer.writerow(record)

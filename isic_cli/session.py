@@ -6,11 +6,13 @@ from retryable_requests import RetryableSession
 
 class IsicCliSession(RetryableSession):
     def __init__(self, *args, **kwargs) -> None:
-        from isic_cli import get_version
+        from isic_cli.utils.version import get_version
 
         super().__init__(*args, **kwargs)
+
         self.headers.update(
             {
+                'Accept': 'application/json',
                 'User-agent': f'isic-cli/{get_version()}',
             }
         )
