@@ -6,7 +6,7 @@ from isic_cli.session import IsicCliSession, get_session
 
 
 def get_collections(session: IsicCliSession) -> Iterable[dict]:
-    next_page = 'collections?limit=1'
+    next_page = 'collections/'
 
     while next_page:
         r = session.get(next_page)
