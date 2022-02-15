@@ -6,6 +6,7 @@ import sys
 import traceback
 
 import click
+from click import UsageError
 
 from isic_cli.cli.collection import collection as collection_group
 from isic_cli.cli.context import IsicContext
@@ -18,9 +19,24 @@ from isic_cli.utils.version import check_for_newer_version, get_version
 
 
 @click.group()
-@click.option('-v', '--verbose', is_flag=True, help='Enable verbose mode.')
 @click.option(
     '--guest', is_flag=True, default=False, help='Simulate a non logged in user.', hidden=True
+)
+@click.option(
+    '--sandbox',
+    is_flag=True,
+    default=False,
+    help='Execute against the ISIC Archive sandbox.',
+    hidden=True,
+    envvar='ISIC_SANDBOX',
+)
+@click.option(
+    '--dev',
+    is_flag=True,
+    default=False,
+    help='Execute against a dev ISIC Archive environment.',
+    hidden=True,
+    envvar='ISIC_DEV',
 )
 @click.option(
     '--no-version-check',
@@ -29,9 +45,10 @@ from isic_cli.utils.version import check_for_newer_version, get_version
     help='Disable the version upgrade check.',
     hidden=True,
 )
+@click.option('-v', '--verbose', is_flag=True, help='Enable verbose mode.')
 @click.version_option()
 @click.pass_context
-def cli(ctx, verbose: bool, guest: bool, no_version_check: bool):
+def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_check: bool):
     if verbose:
         requests_log = logging.getLogger('requests.packages.urllib3')
         HTTPConnection.debuglevel = 1
@@ -40,13 +57,24 @@ def cli(ctx, verbose: bool, guest: bool, no_version_check: bool):
             logger.addHandler(logging.StreamHandler(sys.stderr))
             logger.setLevel(logging.DEBUG)
 
+    if sandbox and dev:
+        raise UsageError('Illegal usage: --sandbox is mutually exclusive with --dev.')
+
     if not no_version_check:
         check_for_newer_version()
 
-    oauth = get_oauth_client()
+    if dev:
+        domain = 'http://127.0.0.1:8000'
+    elif sandbox:
+        domain = 'https://api-sandbox.isic-archive.com'
+    else:
+        domain = 'https://api.isic-archive.com'
+
+    oauth = get_oauth_client(f'{domain}/oauth')
+
     if not guest:
         oauth.maybe_restore_login()
-    with get_session(oauth.auth_headers) as session:
+    with get_session(f'{domain}/api/v2/', oauth.auth_headers) as session:
         ctx.obj = IsicContext(
             oauth=oauth, session=session, logged_in=bool(oauth.auth_headers), verbose=verbose
         )

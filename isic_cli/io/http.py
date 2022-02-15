@@ -2,7 +2,9 @@ import json
 from pathlib import Path
 from typing import Iterable, Optional
 
-from isic_cli.session import IsicCliSession, get_session
+from retryable_requests import RetryableSession
+
+from isic_cli.session import IsicCliSession
 
 
 def get_collections(session: IsicCliSession) -> Iterable[dict]:
@@ -46,7 +48,7 @@ def get_num_images(
 def download_image(image: dict, to: Path, progress, task) -> None:
     # intentionally don't pass auth headers, since these are s3 signed urls that
     # already contain credentials.
-    with get_session() as session:
+    with RetryableSession() as session:
         r = session.get(image['urls']['full'], stream=True)
         r.raise_for_status()
 
