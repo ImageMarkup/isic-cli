@@ -1,4 +1,3 @@
-import itertools
 import os
 from pathlib import Path
 import re
@@ -19,12 +18,14 @@ def test_base_command(cli_run):
 def test_collection_list(cli_run, mocker):
     mocker.patch(
         'isic_cli.cli.collection.get_collections',
-        return_value=itertools.chain(
+        return_value=iter(
             [
                 {
                     'id': 5,
                     'name': 'foo',
                     'public': True,
+                    'official': False,
+                    'doi': None,
                 }
             ]
         ),
@@ -33,7 +34,7 @@ def test_collection_list(cli_run, mocker):
     result = cli_run(['collection', 'list'])
 
     assert result.exit_code == 0, result.exception
-    assert re.search(r'5.*foo.*True', result.output), result.output
+    assert re.search(r'5.*foo.*True.*False', result.output), result.output
 
 
 def test_metadata_validate(runner, cli_run):
@@ -52,7 +53,7 @@ def test_metadata_download(cli_run, mocker):
     mocker.patch('isic_cli.cli.metadata.get_num_images', return_value=1)
     mocker.patch(
         'isic_cli.cli.metadata.get_images',
-        return_value=itertools.chain(
+        return_value=iter(
             [{'isic_id': 'ISIC_0000000', 'metadata': {'sex': 'male', 'diagnosis': 'melanoma'}}]
         ),
     )
@@ -77,7 +78,7 @@ def test_image_download(runner, cli_run, mocker):
         mocker.patch('isic_cli.cli.image.get_num_images', return_value=1)
         mocker.patch(
             'isic_cli.cli.image.get_images',
-            return_value=itertools.chain(
+            return_value=iter(
                 [{'isic_id': 'ISIC_0000000', 'metadata': {'sex': 'male', 'diagnosis': 'melanoma'}}]
             ),
         )

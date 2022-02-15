@@ -17,11 +17,17 @@ def collection(ctx: IsicContext):
 @click.pass_obj
 @suggest_guest_login
 def list_(ctx: IsicContext):
-    table = Table('ID', 'Name', 'Public')
+    table = Table('ID', 'Name', 'Public', 'Official', 'DOI')
 
     collections = sorted(get_collections(ctx.session), key=lambda coll: coll['name'])
     for collection in collections:
-        table.add_row(str(collection['id']), collection['name'], str(collection['public']))
+        table.add_row(
+            str(collection['id']),
+            collection['name'],
+            str(collection['public']),
+            str(collection['official']),
+            str(collection['doi']),
+        )
 
     console = Console()
     console.print(table)
