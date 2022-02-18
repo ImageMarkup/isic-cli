@@ -10,4 +10,5 @@ class IsicContext:
     oauth: GirderCliOAuthClient
     session: IsicCliSession
     logged_in: bool
+    env: str  # One of sandbox/dev/prod
     verbose: bool

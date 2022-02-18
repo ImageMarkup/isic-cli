@@ -17,6 +17,12 @@ from isic_cli.oauth import get_oauth_client
 from isic_cli.session import get_session
 from isic_cli.utils.version import check_for_newer_version, get_version
 
+DOMAINS = {
+    'dev': 'http://127.0.0.1:8000',
+    'sandbox': 'https://api-sandbox.isic-archive.com',
+    'prod': 'https://api.isic-archive.com',
+}
+
 
 @click.group()
 @click.option(
@@ -60,23 +66,26 @@ def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_ch
     if sandbox and dev:
         raise UsageError('Illegal usage: --sandbox is mutually exclusive with --dev.')
 
+    env = 'prod'
+    if sandbox:
+        env = 'sandbox'
+    elif dev:
+        env = 'dev'
+
     if not no_version_check:
         check_for_newer_version()
 
-    if dev:
-        domain = 'http://127.0.0.1:8000'
-    elif sandbox:
-        domain = 'https://api-sandbox.isic-archive.com'
-    else:
-        domain = 'https://api.isic-archive.com'
-
-    oauth = get_oauth_client(f'{domain}/oauth')
+    oauth = get_oauth_client(f'{DOMAINS[env]}/oauth')
 
     if not guest:
         oauth.maybe_restore_login()
-    with get_session(f'{domain}/api/v2/', oauth.auth_headers) as session:
+    with get_session(f'{DOMAINS[env]}/api/v2/', oauth.auth_headers) as session:
         ctx.obj = IsicContext(
-            oauth=oauth, session=session, logged_in=bool(oauth.auth_headers), verbose=verbose
+            oauth=oauth,
+            session=session,
+            logged_in=bool(oauth.auth_headers),
+            env=env,
+            verbose=verbose,
         )
 
 
