@@ -1,3 +1,4 @@
+import logging
 import re
 import sys
 
@@ -9,6 +10,8 @@ from isic_cli.cli.context import IsicContext
 from isic_cli.cli.types import CollectionId
 from isic_cli.cli.utils import require_login, suggest_guest_login
 from isic_cli.io.http import get_collections
+
+logger = logging.getLogger(__name__)
 
 
 @click.group(short_help='Manage collections.')
@@ -60,10 +63,13 @@ def add_images(ctx: IsicContext, collection_id: int, from_isic_ids):
     )
     for isic_id in isic_ids:
         if not re.match(r'^ISIC_\d{7}$', isic_id):
-            click.echo(f'Found invalidly formatted ISIC ID: "{isic_id}"', err=True)
+            click.secho(f'Found invalidly formatted ISIC ID: "{isic_id}"', err=True, fg='red')
             sys.exit(1)
 
     r = ctx.session.post(f'collections/{collection_id}/populate-from-list/', {'isic_ids': isic_ids})
+    if 400 <= r.status_code <= 500:
+        click.secho(f'Failed to add images, error: \n{r.text}', fg='red', err=True)
+        sys.exit(1)
     r.raise_for_status()
 
     click.echo(
