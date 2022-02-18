@@ -1,6 +1,9 @@
+import logging
 from typing import Optional
 
 from retryable_requests import RetryableSession
+
+logger = logging.getLogger(__name__)
 
 
 class IsicCliSession(RetryableSession):
@@ -15,6 +18,12 @@ class IsicCliSession(RetryableSession):
                 'User-agent': f'isic-cli/{get_version()}',
             }
         )
+
+    def request(self, *args, **kwargs):
+        r = super().request(*args, **kwargs)
+        if not r.ok:
+            logger.debug(f'bad response: {r.text}')
+        return r
 
 
 def get_session(
