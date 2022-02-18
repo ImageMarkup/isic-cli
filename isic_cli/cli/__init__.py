@@ -11,7 +11,7 @@ from click import UsageError
 from isic_cli.cli.collection import collection as collection_group
 from isic_cli.cli.context import IsicContext
 from isic_cli.cli.image import image as image_group
-from isic_cli.cli.login import login
+from isic_cli.cli.login import login, logout
 from isic_cli.cli.metadata import metadata as metadata_group
 from isic_cli.oauth import get_oauth_client
 from isic_cli.session import get_session
@@ -93,6 +93,7 @@ cli.add_command(collection_group, name='collection')
 cli.add_command(image_group, name='image')
 cli.add_command(metadata_group, name='metadata')
 cli.add_command(login, name='login')
+cli.add_command(logout, name='logout')
 
 
 def main():
