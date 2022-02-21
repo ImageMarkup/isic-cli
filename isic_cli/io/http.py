@@ -2,9 +2,16 @@ import json
 from pathlib import Path
 from typing import Iterable, Optional
 
+from more_itertools import chunked
 from retryable_requests import RetryableSession
 
 from isic_cli.session import IsicCliSession
+
+
+def get_collection(session: IsicCliSession, collection_id: int | str) -> dict:
+    r = session.get(f'collections/{collection_id}/')
+    r.raise_for_status()
+    return r.json()
 
 
 def get_collections(session: IsicCliSession) -> Iterable[dict]:
@@ -15,6 +22,39 @@ def get_collections(session: IsicCliSession) -> Iterable[dict]:
         r.raise_for_status()
         yield from r.json()['results']
         next_page = r.json()['next']
+
+
+def _merge_summaries(a: dict[str, list[str]], b: dict[str, list[str]]) -> dict[str, list[str]]:
+    ret = {}
+    for k, v in a.items():
+        ret[k] = v + b.get(k, [])
+
+    for k, v in b.items():
+        if k not in a:
+            ret[k] = v
+
+    return ret
+
+
+def bulk_collection_operation(
+    session: IsicCliSession,
+    collection_id: int,
+    operation: str,
+    isic_ids: Iterable[str],
+    progress,
+    task,
+) -> dict[str, list[str]]:
+    results = {}
+
+    for chunk in chunked(isic_ids, 50):
+        r = session.post(f'collections/{collection_id}/{operation}/', {'isic_ids': chunk})
+        r.raise_for_status()
+
+        results = _merge_summaries(results, r.json())
+
+        progress.update(task, advance=len(chunk))
+
+    return results
 
 
 def get_images(

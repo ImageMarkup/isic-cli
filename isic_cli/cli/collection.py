@@ -3,15 +3,55 @@ import re
 import sys
 
 import click
+from humanize.number import intcomma
 from rich.console import Console
+from rich.progress import Progress
 from rich.table import Table
 
 from isic_cli.cli.context import IsicContext
 from isic_cli.cli.types import CollectionId
 from isic_cli.cli.utils import require_login, suggest_guest_login
-from isic_cli.io.http import get_collections
+from isic_cli.io.http import bulk_collection_operation, get_collections
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_isic_ids(ctx, param, value) -> list[str]:
+    isic_ids = set((line.strip() for line in value.read().splitlines() if line.strip() != ''))
+    for isic_id in isic_ids:
+        if not re.match(r'^ISIC_\d{7}$', isic_id):
+            click.secho(f'Found invalidly formatted ISIC ID: "{isic_id}"', err=True, fg='red')
+            sys.exit(1)
+
+    return list(isic_ids)
+
+
+def _table_from_summary(summary: dict[str, list[str]], nice_map: dict | None = None):
+    nice_map = {} if nice_map is None else nice_map
+    table = Table()
+
+    table.add_column('Status')
+    table.add_column('Num instances', justify='right')
+    table.add_column('Examples', justify='right')
+
+    def examples(isic_ids: list) -> str:
+        s = set(isic_ids)
+        ret = ', '.join(sorted(list(s)[:3]))
+        if len(s) > 3:
+            ret += ', etc.'
+        else:
+            ret += '.'
+        return ret
+
+    table.add_row(
+        nice_map['succeeded'], str(len(summary['succeeded'])), examples(summary['succeeded'])
+    )
+
+    for k, v in summary.items():
+        if k != 'succeeded':  # already printed
+            table.add_row(nice_map[k], str(len(v)), examples(v))
+
+    return table
 
 
 @click.group(short_help='Manage collections.')
@@ -24,7 +64,7 @@ def collection(ctx: IsicContext):
 @click.pass_obj
 @suggest_guest_login
 def list_(ctx: IsicContext):
-    table = Table('ID', 'Name', 'Public', 'Official', 'DOI')
+    table = Table('ID', 'Name', 'Public', 'Official', 'Locked', 'DOI')
 
     collections = sorted(get_collections(ctx.session), key=lambda coll: coll['name'])
     for collection in collections:
@@ -33,6 +73,7 @@ def list_(ctx: IsicContext):
             collection['name'],
             str(collection['public']),
             str(collection['official']),
+            str(collection['locked']),
             str(collection['doi']),
         )
 
@@ -41,10 +82,11 @@ def list_(ctx: IsicContext):
 
 
 @collection.command(name='add-images', help='Add images to a collection.')
-@click.argument('collection_id', type=CollectionId())
+@click.argument('collection_id', type=CollectionId(locked_okay=False))
 @click.option(
     '--from-isic-ids',
     type=click.File('r'),
+    callback=_parse_isic_ids,
     required=True,
     help=(
         'Provide a path to a line delimited list of ISIC IDs to add to a collection. '
@@ -53,26 +95,70 @@ def list_(ctx: IsicContext):
 )
 @click.pass_obj
 @require_login
-def add_images(ctx: IsicContext, collection_id: int, from_isic_ids):
+def add_images(ctx: IsicContext, collection_id: int, from_isic_ids: list[str]):
     # TODO: fix this import
     from isic_cli.cli import DOMAINS
 
-    # TODO: maybe move this to a type
-    isic_ids = set(
-        (line.strip() for line in from_isic_ids.read().splitlines() if line.strip() != '')
-    )
-    for isic_id in isic_ids:
-        if not re.match(r'^ISIC_\d{7}$', isic_id):
-            click.secho(f'Found invalidly formatted ISIC ID: "{isic_id}"', err=True, fg='red')
-            sys.exit(1)
+    with Progress(console=Console(file=sys.stderr)) as progress:
+        task = progress.add_task(
+            f'Adding images ({intcomma(len(from_isic_ids))} total)', total=len(from_isic_ids)
+        )
+        summary = bulk_collection_operation(
+            ctx.session, collection_id, 'populate-from-list', from_isic_ids, progress, task
+        )
 
-    r = ctx.session.post(f'collections/{collection_id}/populate-from-list/', {'isic_ids': isic_ids})
-    if 400 <= r.status_code <= 500:
-        click.secho(f'Failed to add images, error: \n{r.text}', fg='red', err=True)
-        sys.exit(1)
-    r.raise_for_status()
-
-    click.echo(
-        f'Adding {len(isic_ids)} images to collection {collection_id}. It may take several minutes.'
+    table = _table_from_summary(
+        summary,
+        nice_map={
+            'succeeded': '[green]Image added[/]',
+            'no_perms_or_does_not_exist': '[red]Image not found or inaccessible[/]',
+            'private_image_public_collection': '[red]Image is private, collection is public[/]',
+        },
     )
-    click.echo(f'View the results at: {DOMAINS[ctx.env]}/collections/{collection_id}/')
+
+    Console().print(table)
+
+    if summary['succeeded']:
+        click.echo()
+        click.echo(f'View your collection: {DOMAINS[ctx.env]}/collections/{collection_id}/')
+
+
+@collection.command(name='remove-images', help='Remove images from a collection.')
+@click.argument('collection_id', type=CollectionId(locked_okay=False))
+@click.option(
+    '--from-isic-ids',
+    type=click.File('r'),
+    callback=_parse_isic_ids,
+    required=True,
+    help=(
+        'Provide a path to a line delimited list of ISIC IDs to remove from a collection. '
+        'Alternatively, - allows stdin to be used.'
+    ),
+)
+@click.pass_obj
+@require_login
+def from_images(ctx: IsicContext, collection_id: int, from_isic_ids: list[str]):
+    # TODO: fix this import
+    from isic_cli.cli import DOMAINS
+
+    with Progress(console=Console(file=sys.stderr)) as progress:
+        task = progress.add_task(
+            f'Removing images ({intcomma(len(from_isic_ids))} total)', total=len(from_isic_ids)
+        )
+        summary = bulk_collection_operation(
+            ctx.session, collection_id, 'remove-from-list', from_isic_ids, progress, task
+        )
+
+    table = _table_from_summary(
+        summary,
+        nice_map={
+            'succeeded': '[green]Image removed[/]',
+            'no_perms_or_does_not_exist': '[red]Image not found or inaccessible[/]',
+        },
+    )
+
+    Console().print(table)
+
+    if summary['succeeded']:
+        click.echo()
+        click.echo(f'View your collection: {DOMAINS[ctx.env]}/collections/{collection_id}/')

@@ -1,7 +1,11 @@
 import re
+import sys
 
 import click
 from click.types import IntParamType
+from requests.models import HTTPError
+
+from isic_cli.io.http import get_collection
 
 
 class SearchString(click.ParamType):
@@ -26,10 +30,23 @@ class CommaSeparatedIdentifiers(click.ParamType):
 class CollectionId(IntParamType):
     name = 'collection_id'
 
-    def convert(self, value, param, ctx):
-        r = ctx.obj.session.get(f'collections/{value}/')
-        if not r.ok:
-            self.fail(
-                f"Collection {value} does not exist or you don't have access to it.", param, ctx
-            )
+    def __init__(self, locked_okay: bool | None = False) -> None:
+        super().__init__()
+        self.locked_okay = locked_okay
+
+    def convert(self, value: str, param, ctx) -> str:
+        try:
+            collection = get_collection(ctx.obj.session, value)
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                self.fail(
+                    f"Collection {value} does not exist or you don't have access to it.", param, ctx
+                )
+            else:
+                raise
+
+        if collection['locked'] and not self.locked_okay:
+            click.secho(f'"{collection["name"]}" is locked for modifications.', err=True, fg='red')
+            sys.exit(1)
+
         return value

@@ -38,6 +38,7 @@ setup(
         'humanize',
         'isic-metadata',
         'joblib',
+        'more-itertools',
         'numpy',
         'pandas',
         'requests',
