@@ -1,6 +1,7 @@
 import logging
 import re
 import sys
+from typing import Optional
 
 import click
 from humanize.number import intcomma
@@ -26,7 +27,7 @@ def _parse_isic_ids(ctx, param, value) -> list[str]:
     return list(isic_ids)
 
 
-def _table_from_summary(summary: dict[str, list[str]], nice_map: dict | None = None):
+def _table_from_summary(summary: dict[str, list[str]], nice_map: Optional[dict] = None):
     nice_map = {} if nice_map is None else nice_map
     table = Table()
 
