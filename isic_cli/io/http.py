@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Union
 
 from more_itertools import chunked
 from retryable_requests import RetryableSession
@@ -8,7 +8,7 @@ from retryable_requests import RetryableSession
 from isic_cli.session import IsicCliSession
 
 
-def get_collection(session: IsicCliSession, collection_id: int | str) -> dict:
+def get_collection(session: IsicCliSession, collection_id: Union[int, str]) -> dict:
     r = session.get(f'collections/{collection_id}/')
     r.raise_for_status()
     return r.json()
