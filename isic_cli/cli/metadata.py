@@ -86,7 +86,9 @@ def validate(csv_path: Path):
 
 
 @metadata.command(name='download')
-@click.option('-s', '--search', type=SearchString(), help='e.g. "diagnosis:melanoma AND age:50"')
+@click.option(
+    '-s', '--search', type=SearchString(), help='e.g. "diagnosis:melanoma AND age_approx:50"'
+)
 @click.option(
     '-c',
     '--collections',
