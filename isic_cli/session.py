@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Optional
 
 from retryable_requests import RetryableSession
@@ -20,9 +21,17 @@ class IsicCliSession(RetryableSession):
         )
 
     def request(self, *args, **kwargs):
+        start = time.time()
         r = super().request(*args, **kwargs)
+        end = time.time()
+
+        # TODO: this is a little confusing because retries are included in
+        # these times - maybe break it out.
+        logger.debug(f'timing: {end - start}')
+
         if not r.ok:
             logger.debug(f'bad response: {r.text}')
+
         return r
 
 
