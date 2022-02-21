@@ -23,6 +23,8 @@ DOMAINS = {
     'prod': 'https://api.isic-archive.com',
 }
 
+logger = logging.getLogger(__name__)
+
 
 @click.group()
 @click.option(
@@ -55,13 +57,15 @@ DOMAINS = {
 @click.version_option()
 @click.pass_context
 def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_check: bool):
-    if verbose:
-        requests_log = logging.getLogger('requests.packages.urllib3')
-        HTTPConnection.debuglevel = 1
+    logger.addHandler(logging.StreamHandler(sys.stderr))
+    logger.setLevel(logging.WARN)
 
-        for logger in (logging.getLogger('isic_cli'), requests_log):
-            logger.addHandler(logging.StreamHandler(sys.stderr))
-            logger.setLevel(logging.DEBUG)
+    if verbose:
+        HTTPConnection.debuglevel = 1
+        requests_log = logging.getLogger('requests.packages.urllib3')
+        requests_log.addHandler(logging.StreamHandler(sys.stderr))
+        requests_log.setLevel(logging.DEBUG)
+        logger.setLevel(logging.DEBUG)
 
     if sandbox and dev:
         raise UsageError('Illegal usage: --sandbox is mutually exclusive with --dev.')
@@ -72,7 +76,9 @@ def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_ch
     elif dev:
         env = 'dev'
 
-    if not no_version_check:
+    if no_version_check:
+        logger.warning('Disabling the version check could cause errors.')
+    else:
         check_for_newer_version()
 
     oauth = get_oauth_client(f'{DOMAINS[env]}/oauth')
