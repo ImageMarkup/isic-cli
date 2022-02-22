@@ -30,7 +30,8 @@ def metadata(obj):
 
 @metadata.command(name='validate')
 @click.argument(
-    'csv_path', type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True)
+    'csv_path',
+    type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True, path_type=Path),
 )
 def validate(csv_path: Path):
     """Validate metadata from a local csv."""

@@ -44,6 +44,7 @@ setup(
         'requests',
         'retryable-requests',
         'rich',
+        'django-s3-file-field-client',
         'typer',
     ],
     extras_require={

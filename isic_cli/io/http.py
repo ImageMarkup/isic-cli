@@ -14,6 +14,18 @@ def get_collection(session: IsicCliSession, collection_id: Union[int, str]) -> d
     return r.json()
 
 
+def get_cohort(session: IsicCliSession, cohort_id: Union[int, str]) -> dict:
+    r = session.get(f'cohorts/{cohort_id}/')
+    r.raise_for_status()
+    return r.json()
+
+
+def create_accession(session: IsicCliSession, cohort_id: int, original_blob: str) -> dict:
+    r = session.post('accessions/', json={'original_blob': original_blob, 'cohort': cohort_id})
+    r.raise_for_status()
+    return r.json()
+
+
 def get_collections(session: IsicCliSession) -> Iterable[dict]:
     next_page = 'collections/'
 

@@ -47,7 +47,7 @@ def image(ctx):
 @click.option(
     '-o',
     '--outdir',
-    type=click.Path(file_okay=False, dir_okay=True, writable=True),
+    type=click.Path(file_okay=False, dir_okay=True, writable=True, path_type=Path),
     default=Path('images'),
 )
 @click.pass_obj

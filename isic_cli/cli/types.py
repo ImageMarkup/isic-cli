@@ -6,7 +6,7 @@ import click
 from click.types import IntParamType
 from requests.models import HTTPError
 
-from isic_cli.io.http import get_collection
+from isic_cli.io.http import get_cohort, get_collection
 
 
 class SearchString(click.ParamType):
@@ -49,5 +49,22 @@ class CollectionId(IntParamType):
         if collection['locked'] and not self.locked_okay:
             click.secho(f'"{collection["name"]}" is locked for modifications.', err=True, fg='red')
             sys.exit(1)
+
+        return value
+
+
+class CohortId(IntParamType):
+    name = 'cohort_id'
+
+    def convert(self, value: str, param, ctx) -> str:
+        try:
+            get_cohort(ctx.obj.session, value)
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                self.fail(
+                    f"Cohort {value} does not exist or you don't have access to it.", param, ctx
+                )
+            else:
+                raise
 
         return value
