@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 from typing import Iterable, Optional, Union
 
@@ -107,10 +106,5 @@ def download_image(image: dict, to: Path, progress, task) -> None:
         with open(to / f'{image["isic_id"]}.JPG', 'wb') as outfile:
             for chunk in r.iter_content(1024 * 1024 * 5):
                 outfile.write(chunk)
-                # progress.update(task, advance=len(chunk))
-
-        with open(to / f'{image["isic_id"]}.json', 'w') as outfile:
-            del image['urls']
-            json.dump(image, outfile, indent=2)
 
     progress.update(task, advance=1)

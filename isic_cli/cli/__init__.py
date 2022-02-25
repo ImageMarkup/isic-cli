@@ -128,7 +128,6 @@ def main():
 
         click.echo(traceback.format_exc(), err=True)
 
-        # TODO: maybe use scooby?
         click.echo(f'isic-cli: v{get_version()}', err=True)
         click.echo(f'python:   v{platform.python_version()}', err=True)
         click.echo(f'time:     {datetime.utcnow().isoformat()}', err=True)

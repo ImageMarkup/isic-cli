@@ -1,3 +1,4 @@
+import csv
 import itertools
 from pathlib import Path
 import sys
@@ -73,18 +74,64 @@ def download(
     anatom_site_general:*torso AND image_type:dermoscopic
     """
     outdir.mkdir(exist_ok=True)
+
     with Progress(console=Console(file=sys.stderr)) as progress:
         num_images = get_num_images(ctx.session, search, collections)
+        nice_num_images = intcomma(num_images)
         if limit > 0:
             num_images = min(num_images, limit)
 
-        task = progress.add_task(
-            f'Downloading images ({intcomma( num_images )} total)', total=num_images
+        task1 = progress.add_task(
+            f'Downloading image information ({nice_num_images} total)', total=num_images
         )
-        images = get_images(ctx.session, search, collections)
+        task2 = progress.add_task(
+            f'Downloading image files ({nice_num_images} total)', total=num_images
+        )
+        images_iterator = get_images(ctx.session, search, collections)
 
         if limit > 0:
-            images = itertools.islice(images, limit)
+            images_iterator = itertools.islice(images_iterator, limit)
+
+        # This is memory inefficient but unavoidable since the CSV needs to look at ALL
+        # records to determine what the final headers should be. The alternative would
+        # be to iterate through all images_iterator twice (hitting the API each time).
+        images = []
+        fieldnames = set()
+        for image in images_iterator:
+            progress.update(task1, advance=1)
+            fieldnames |= set(image.get('metadata', {}).keys())
+            images.append(image)
 
         with parallel_backend('threading'):
-            Parallel()(delayed(download_image)(image, outdir, progress, task) for image in images)
+            Parallel()(delayed(download_image)(image, outdir, progress, task2) for image in images)
+
+        with (outdir / 'metadata.csv').open('w') as outfile:
+            writer = csv.DictWriter(outfile, ['isic_id'] + list(sorted(fieldnames)))
+            writer.writeheader()
+
+            for image in images:
+                writer.writerow({**{'isic_id': image['isic_id']}, **image['metadata']})
+
+        with (outdir / 'attributions.csv').open('w') as outfile:
+            writer = csv.DictWriter(outfile, ['isic_id', 'license', 'attribution'])
+            writer.writeheader()
+
+            for image in images:
+                writer.writerow(
+                    {
+                        'isic_id': image['isic_id'],
+                        'license': image['copyright_license'],
+                        'attribution': image['attribution'],
+                    }
+                )
+
+    click.echo()
+    click.secho(f'Successfully downloaded {nice_num_images} images to {outdir}/.', fg='green')
+    click.secho(
+        f'Successfully wrote {nice_num_images} metadata records to {outdir/"metadata.csv"}.',
+        fg='green',
+    )
+    click.secho(
+        f'Successfully wrote {nice_num_images} attribution records to {outdir/"attribution.csv"}.',
+        fg='green',
+    )
