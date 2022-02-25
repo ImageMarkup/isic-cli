@@ -10,8 +10,6 @@ from click.types import IntRange
 from humanize import intcomma
 from isic_metadata.metadata import MetadataRow
 from isic_metadata.utils import get_unstructured_columns
-import numpy as np
-import pandas as pd
 from rich.console import Console
 from rich.progress import Progress, track
 from rich.table import Table
@@ -35,6 +33,10 @@ def metadata(obj):
 )
 def validate(csv_path: Path):
     """Validate metadata from a local csv."""
+    # These imports are slow, inline them.
+    import numpy as np
+    import pandas as pd
+
     console = Console()
     with open(csv_path) as csv:
         df = pd.read_csv(csv, header=0)
@@ -74,6 +76,8 @@ def validate(csv_path: Path):
         console.print(table)
 
         sys.exit(1)
+    else:
+        click.secho('No structural errors found!', fg='green')
 
     unstructured_columns = get_unstructured_columns(df)
     if unstructured_columns:

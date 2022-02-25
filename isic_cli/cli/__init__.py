@@ -27,7 +27,7 @@ DOMAINS = {
 logger = logging.getLogger(__name__)
 
 
-@click.group()
+@click.group(context_settings={'help_option_names': ['-h', '--help']}, no_args_is_help=True)
 @click.option(
     '--guest', is_flag=True, default=False, help='Simulate a non logged in user.', hidden=True
 )
