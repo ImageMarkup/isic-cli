@@ -1,29 +1,54 @@
 import os
 from pathlib import Path
 
+import pytest
 
-def test_image_download(runner, cli_run, mocker):
+
+@pytest.fixture
+def outdir():
+    return 'somedir'
+
+
+@pytest.fixture
+def isolated_filesystem(runner):
     with runner.isolated_filesystem():
+        yield
 
-        def _download_image_side_effect(*args, **kwargs):
-            base = Path('images')
-            with open(base / 'ISIC_0000000.JPG', 'wb') as f:
-                f.write(b'12345')
 
-            with open(base / 'ISIC_0000000.json', 'w') as f:
-                f.write('12345')
+@pytest.fixture
+def mock_images(mocker, isolated_filesystem, outdir):
+    def _download_image_side_effect(*args, **kwargs):
+        with open(Path(outdir) / 'ISIC_0000000.JPG', 'wb') as f:
+            f.write(b'12345')
 
-        mocker.patch('isic_cli.cli.image.get_num_images', return_value=1)
-        mocker.patch(
-            'isic_cli.cli.image.get_images',
-            return_value=iter(
-                [{'isic_id': 'ISIC_0000000', 'metadata': {'sex': 'male', 'diagnosis': 'melanoma'}}]
-            ),
-        )
-        mocker.patch('isic_cli.cli.image.download_image', side_effect=_download_image_side_effect)
+        with open(Path(outdir) / 'metadata.csv', 'w') as f:
+            f.write('foo')
 
-        result = cli_run(['image', 'download', 'somedir'])
+        with open(Path(outdir) / 'attributions.csv', 'w') as f:
+            f.write('foo')
 
-        assert result.exit_code == 0, result.exception
-        assert os.path.exists('somedir/ISIC_0000000.JPG')
-        assert os.path.exists('somedir/ISIC_0000000.json')
+    mocker.patch('isic_cli.cli.image.get_num_images', return_value=1)
+    mocker.patch(
+        'isic_cli.cli.image.get_images',
+        return_value=iter(
+            [
+                {
+                    'isic_id': 'ISIC_0000000',
+                    'copyright_license': 'CC-0',
+                    'attribution': 'some-institution',
+                    'metadata': {'sex': 'male', 'diagnosis': 'melanoma'},
+                }
+            ]
+        ),
+    )
+    mocker.patch('isic_cli.cli.image.download_image', side_effect=_download_image_side_effect)
+
+
+def test_image_download(cli_run, isolated_filesystem, outdir, mock_images):
+    print(isolated_filesystem)
+    result = cli_run(['image', 'download', outdir])
+
+    assert result.exit_code == 0, result.exception
+    assert os.path.exists(f'{outdir}/ISIC_0000000.JPG')
+    assert os.path.exists(f'{outdir}/metadata.csv')
+    assert os.path.exists(f'{outdir}/attributions.csv')

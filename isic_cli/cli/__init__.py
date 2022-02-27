@@ -7,6 +7,7 @@ import traceback
 
 import click
 from click import UsageError, get_current_context
+from requests.exceptions import HTTPError
 
 from isic_cli.cli.accession import accession as accession_group
 from isic_cli.cli.auth import auth as auth_group
@@ -14,6 +15,7 @@ from isic_cli.cli.collection import collection as collection_group
 from isic_cli.cli.context import IsicContext
 from isic_cli.cli.image import image as image_group
 from isic_cli.cli.metadata import metadata as metadata_group
+from isic_cli.io.http import get_users_me
 from isic_cli.oauth import get_oauth_client
 from isic_cli.session import get_session
 from isic_cli.utils.version import check_for_newer_version, get_version
@@ -89,13 +91,15 @@ def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_ch
 
     with get_session(f'{DOMAINS[env]}/api/v2/', oauth.auth_headers) as session:
         logged_in = False
+        user = None
         if oauth.auth_headers:
-            r = session.get('users/me')
-            if r.status_code == 401:
-                # perhaps a stale token
-                oauth.logout()
+            try:
+                user = get_users_me(session)
+            except HTTPError as e:
+                if e.response.status_code == 404:
+                    # perhaps a stale token
+                    oauth.logout()
             else:
-                r.raise_for_status()
                 logged_in = True
 
         ctx.obj = IsicContext(
@@ -103,6 +107,7 @@ def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_ch
             session=session,
             logged_in=logged_in,
             env=env,
+            user=user,
             verbose=verbose,
         )
 

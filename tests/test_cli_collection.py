@@ -83,7 +83,7 @@ def test_collection_list(cli_run, mocker):
     assert re.search(r'5.*foo.*True.*False.*True', result.output), result.output
 
 
-def test_collection_add_images(cli_run, mocker):
+def test_collection_add_images(cli_run, mocker, mock_user):
     mocker.patch(
         'isic_cli.cli.types.get_collection',
         return_value={

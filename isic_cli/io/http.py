@@ -7,6 +7,12 @@ from retryable_requests import RetryableSession
 from isic_cli.session import IsicCliSession
 
 
+def get_users_me(session: IsicCliSession) -> Optional[dict]:
+    r = session.get('users/me')
+    r.raise_for_status()
+    return r.json()
+
+
 def get_collection(session: IsicCliSession, collection_id: Union[int, str]) -> dict:
     r = session.get(f'collections/{collection_id}/')
     r.raise_for_status()
