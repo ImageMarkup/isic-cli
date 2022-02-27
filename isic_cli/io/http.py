@@ -8,7 +8,7 @@ from isic_cli.session import IsicCliSession
 
 
 def get_users_me(session: IsicCliSession) -> Optional[dict]:
-    r = session.get('users/me')
+    r = session.get('users/me/')
     r.raise_for_status()
     return r.json()
 
