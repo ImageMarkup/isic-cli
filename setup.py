@@ -40,6 +40,7 @@ setup(
         'joblib',
         'more-itertools',
         'numpy',
+        'packaging',
         'pandas',
         'requests',
         'retryable-requests',
