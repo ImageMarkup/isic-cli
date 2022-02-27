@@ -1,4 +1,5 @@
 from importlib.metadata import PackageNotFoundError, version
+import logging
 import sys
 from typing import Optional
 
@@ -7,6 +8,8 @@ from packaging.version import Version
 from pkg_resources import parse_version
 import requests
 from requests.exceptions import RequestException
+
+logger = logging.getLogger(__name__)
 
 
 def get_version() -> Optional[Version]:
@@ -43,10 +46,15 @@ def check_for_newer_version():
 
     try:
         newest_version = newest_version_available()
+    except RequestException:
+        logger.warning('Failed to check for newer version of isic-cli.')
+        return
+    else:
         if not newest_version:
             return
 
         upgrade_type_available = upgrade_type(this_version, newest_version)
+
         if upgrade_type_available == 'major':
             click.secho(
                 """There is a new major version of isic-cli available.
@@ -64,8 +72,3 @@ If you are using pip, then you can upgrade by running the following command:
                 fg='yellow',
                 err=True,
             )
-    except RequestException:
-        click.echo(
-            click.style('Failed to check for newer version of isic-cli:', fg='red'), err=True
-        )
-        raise
