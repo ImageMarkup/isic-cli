@@ -138,7 +138,7 @@ def add_images(ctx: IsicContext, collection_id: int, from_isic_ids: list[str]):
 )
 @click.pass_obj
 @require_login
-def from_images(ctx: IsicContext, collection_id: int, from_isic_ids: list[str]):
+def remove_images(ctx: IsicContext, collection_id: int, from_isic_ids: list[str]):
     # TODO: fix this import
     from isic_cli.cli import DOMAINS
 

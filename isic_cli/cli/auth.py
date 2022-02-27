@@ -16,9 +16,7 @@ def auth(ctx):
 def login(obj: IsicContext):
     """Login to the ISIC Archive."""
     if obj.logged_in:
-        r = obj.session.get('users/me')
-        r.raise_for_status()
-        click.echo(f'Hello {r.json()["email"]}!')
+        click.echo(f'Hello {obj.user["email"]}!')
     else:
         obj.oauth.login()
         click.echo('Success!')

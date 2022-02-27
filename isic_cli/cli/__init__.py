@@ -6,7 +6,7 @@ import sys
 import traceback
 
 import click
-from click import UsageError
+from click import UsageError, get_current_context
 
 from isic_cli.cli.accession import accession as accession_group
 from isic_cli.cli.auth import auth as auth_group
@@ -128,11 +128,22 @@ def main():
 
         click.echo(traceback.format_exc(), err=True)
 
-        click.echo(f'isic-cli: v{get_version()}', err=True)
+        ctx = get_current_context(silent=True)
+        env = '-'
+        user = '-'
+
+        if ctx and ctx.obj:
+            env = ctx.obj['env']
+
+            if ctx.obj.user:
+                user = ctx.obj.user['id']
+
+        click.echo(f'isic-cli: v{get_version() or "-"}', err=True)
         click.echo(f'python:   v{platform.python_version()}', err=True)
         click.echo(f'time:     {datetime.utcnow().isoformat()}', err=True)
         click.echo(f'os:       {platform.platform()}', err=True)
-        # TODO: try to scrape auth credentials?
+        click.echo(f'env:      {env}', err=True)
+        click.echo(f'user:     {user}', err=True)
         click.echo(f'command:  isic {" ".join(sys.argv[1:])}\n', err=True)
 
         click.echo(
