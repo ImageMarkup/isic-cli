@@ -19,8 +19,8 @@ isic auth login
 isic image download  # downloads the entire archive, images and metadata, to images/
 
 # optionally filter the results
-isic image download --search 'diagnosis:melanoma'
-isic image download --search 'age_approx:[5 TO 25] AND sex:male'
+isic image download --search 'diagnosis:melanoma' images/
+isic image download --search 'age_approx:[5 TO 25] AND sex:male' images/
 ```
 
 

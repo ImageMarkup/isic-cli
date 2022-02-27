@@ -22,8 +22,8 @@ def test_image_download(runner, cli_run, mocker):
         )
         mocker.patch('isic_cli.cli.image.download_image', side_effect=_download_image_side_effect)
 
-        result = cli_run(['image', 'download'])
+        result = cli_run(['image', 'download', 'somedir'])
 
         assert result.exit_code == 0, result.exception
-        assert os.path.exists('images/ISIC_0000000.JPG')
-        assert os.path.exists('images/ISIC_0000000.json')
+        assert os.path.exists('somedir/ISIC_0000000.JPG')
+        assert os.path.exists('somedir/ISIC_0000000.json')

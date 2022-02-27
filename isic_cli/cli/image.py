@@ -45,11 +45,9 @@ def image(ctx):
     type=IntRange(min=0),
     help='Use a value of 0 to disable the limit.',
 )
-@click.option(
-    '-o',
-    '--outdir',
-    type=click.Path(file_okay=False, dir_okay=True, writable=True, path_type=Path),
-    default=Path('images'),
+@click.argument(
+    'outdir',
+    type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
 )
 @click.pass_obj
 @suggest_guest_login
