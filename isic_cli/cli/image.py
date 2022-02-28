@@ -74,21 +74,20 @@ def download(
     outdir.mkdir(exist_ok=True)
 
     with Progress(console=Console(file=sys.stderr)) as progress:
-        num_images = get_num_images(ctx.session, search, collections)
-        nice_num_images = intcomma(num_images)
-        if limit > 0:
-            num_images = min(num_images, limit)
+        archive_num_images = get_num_images(ctx.session, search, collections)
+        download_num_images = archive_num_images if limit == 0 else min(archive_num_images, limit)
+        nice_num_images = intcomma(download_num_images)
 
         task1 = progress.add_task(
-            f'Downloading image information ({nice_num_images} total)', total=num_images
+            f'Downloading image information ({nice_num_images} total)',
+            total=download_num_images,
         )
         task2 = progress.add_task(
-            f'Downloading image files ({nice_num_images} total)', total=num_images
+            f'Downloading image files ({nice_num_images} total)', total=download_num_images
         )
-        images_iterator = get_images(ctx.session, search, collections)
-
-        if limit > 0:
-            images_iterator = itertools.islice(images_iterator, limit)
+        images_iterator = itertools.islice(
+            get_images(ctx.session, search, collections), download_num_images
+        )
 
         # This is memory inefficient but unavoidable since the CSV needs to look at ALL
         # records to determine what the final headers should be. The alternative would

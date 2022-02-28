@@ -127,18 +127,14 @@ def download(ctx: IsicContext, search: Union[None, str], collections: Union[None
 
     anatom_site_general:*torso AND image_type:dermoscopic
     """
-    num_results = get_num_images(ctx.session, search, collections)
-    if limit > 0:
-        num_results = min(num_results, limit)
-
-    images = get_images(ctx.session, search, collections)
-
-    if limit > 0:
-        images = itertools.islice(images, limit)
+    archive_num_images = get_num_images(ctx.session, search, collections)
+    download_num_images = archive_num_images if limit == 0 else min(archive_num_images, limit)
+    nice_num_images = intcomma(download_num_images)
+    images = itertools.islice(get_images(ctx.session, search, collections), download_num_images)
 
     with Progress(console=Console(file=sys.stderr)) as progress:
         task = progress.add_task(
-            f'Downloading metadata records ({intcomma( num_results )} total)', total=num_results
+            f'Downloading metadata records ({nice_num_images})', total=download_num_images
         )
 
         fieldnames = set()
