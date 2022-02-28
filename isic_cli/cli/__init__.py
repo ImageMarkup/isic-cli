@@ -5,6 +5,7 @@ import platform
 import sys
 import traceback
 
+from authlib.integrations.base_client.errors import OAuthError
 import click
 from click import UsageError, get_current_context
 from requests.exceptions import HTTPError
@@ -87,7 +88,18 @@ def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_ch
     oauth = get_oauth_client(f'{DOMAINS[env]}/oauth')
 
     if not guest:
-        oauth.maybe_restore_login()
+        try:
+            oauth.maybe_restore_login()
+        except OAuthError as e:
+            # This is really rare, but in the event of a refresh token being revoked
+            # (this happens in dev all the time) the restoration will fail with an
+            # invalid_grant error.
+            logger.debug(e)
+            oauth.logout()
+            click.secho(
+                'Something went wrong with restoring a login, you may need to log back in.',
+                fg='yellow',
+            )
 
     with get_session(f'{DOMAINS[env]}/api/v2/', oauth.auth_headers) as session:
         logged_in = False
