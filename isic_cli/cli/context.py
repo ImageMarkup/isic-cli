@@ -10,7 +10,6 @@ from isic_cli.session import IsicCliSession
 class IsicContext:
     oauth: GirderCliOAuthClient
     session: IsicCliSession
-    logged_in: bool
     env: str  # One of dev/sandbox/prod
     user: Optional[dict] = None
     verbose: Optional[bool] = False

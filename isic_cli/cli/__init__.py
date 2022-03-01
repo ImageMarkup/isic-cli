@@ -102,7 +102,6 @@ def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_ch
             )
 
     with get_session(f'{DOMAINS[env]}/api/v2/', oauth.auth_headers) as session:
-        logged_in = False
         user = None
         if oauth.auth_headers:
             try:
@@ -111,13 +110,10 @@ def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_ch
                 if e.response.status_code == 404:
                     # perhaps a stale token
                     oauth.logout()
-            else:
-                logged_in = True
 
         ctx.obj = IsicContext(
             oauth=oauth,
             session=session,
-            logged_in=logged_in,
             env=env,
             user=user,
             verbose=verbose,

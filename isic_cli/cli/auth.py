@@ -15,7 +15,7 @@ def auth(ctx):
 @click.pass_obj
 def login(obj: IsicContext):
     """Login to the ISIC Archive."""
-    if obj.logged_in:
+    if obj.user:
         click.echo(f'Hello {obj.user["email"]}!')
     else:
         obj.oauth.login()
