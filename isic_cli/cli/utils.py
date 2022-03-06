@@ -1,4 +1,6 @@
+from collections import Counter
 import sys
+from typing import Iterable
 
 import click
 
@@ -29,3 +31,41 @@ def require_login(f):
         f(ctx, **kwargs)
 
     return decorator
+
+
+# This is memory inefficient but unavoidable since the CSV needs to look at ALL
+# records to determine what the final headers should be. The alternative would
+# be to iterate through all images_iterator twice (hitting the API each time).
+def _extract_metadata(
+    images: Iterable[dict], progress=None, task=None
+) -> tuple[list[str], list[dict]]:
+    metadata = []
+    base_fields = ['isic_id', 'attribution', 'copyright_license']
+    metadata_fields = set()
+
+    for image in images:
+        metadata_fields |= set(image.get('metadata', {}).keys())
+        metadata.append(
+            {
+                **{
+                    'isic_id': image['isic_id'],
+                    'attribution': image['attribution'],
+                    'copyright_license': image['copyright_license'],
+                },
+                **image['metadata'],
+            }
+        )
+
+        if progress and task:
+            progress.update(task, advance=1)
+
+    return base_fields + list(sorted(metadata_fields)), metadata
+
+
+def get_attributions(images: Iterable[dict]) -> list[str]:
+    counter = Counter(r['attribution'] for r in images)
+    # sort by the number of images descending, then the name of the institution ascending
+    attributions = sorted(counter.most_common(), key=lambda v: (-v[1], v[0]))
+    # push anonymous attributions to the end
+    attributions = sorted(attributions, key=lambda v: 1 if v[0] == 'Anonymous' else 0)
+    return [x[0] for x in attributions]

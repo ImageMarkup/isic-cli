@@ -16,7 +16,7 @@ from rich.table import Table
 
 from isic_cli.cli.context import IsicContext
 from isic_cli.cli.types import CommaSeparatedIdentifiers, SearchString
-from isic_cli.cli.utils import suggest_guest_login
+from isic_cli.cli.utils import _extract_metadata, suggest_guest_login
 from isic_cli.io.http import get_images, get_num_images
 
 
@@ -136,16 +136,10 @@ def download(ctx: IsicContext, search: Union[None, str], collections: Union[None
         task = progress.add_task(
             f'Downloading metadata records ({nice_num_images})', total=download_num_images
         )
-
-        fieldnames = set()
-        records = []
-        for image in images:
-            fieldnames |= set(image.get('metadata', {}).keys())
-            records.append({**{'isic_id': image['isic_id']}, **image['metadata']})
-            progress.update(task, advance=1)
+        headers, records = _extract_metadata(images, progress, task)
 
     if records:
-        writer = csv.DictWriter(sys.stdout, ['isic_id'] + list(sorted(fieldnames)))
+        writer = csv.DictWriter(sys.stdout, headers)
         writer.writeheader()
         for record in records:
             writer.writerow(record)

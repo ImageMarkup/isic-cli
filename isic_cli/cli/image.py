@@ -12,7 +12,7 @@ from rich.progress import Progress
 
 from isic_cli.cli.context import IsicContext
 from isic_cli.cli.types import SearchString
-from isic_cli.cli.utils import suggest_guest_login
+from isic_cli.cli.utils import _extract_metadata, get_attributions, suggest_guest_login
 from isic_cli.io.http import download_image, get_images, get_num_images
 
 
@@ -88,39 +88,25 @@ def download(
         images_iterator = itertools.islice(
             get_images(ctx.session, search, collections), download_num_images
         )
-
-        # This is memory inefficient but unavoidable since the CSV needs to look at ALL
-        # records to determine what the final headers should be. The alternative would
-        # be to iterate through all images_iterator twice (hitting the API each time).
         images = []
-        fieldnames = set()
+
+        # See comment above _extract_metadata for why this is necessary
         for image in images_iterator:
-            progress.update(task1, advance=1)
-            fieldnames |= set(image.get('metadata', {}).keys())
             images.append(image)
+            progress.update(task1, advance=1)
 
         with parallel_backend('threading'):
             Parallel()(delayed(download_image)(image, outdir, progress, task2) for image in images)
 
+        headers, records = _extract_metadata(images)
         with (outdir / 'metadata.csv').open('w') as outfile:
-            writer = csv.DictWriter(outfile, ['isic_id'] + list(sorted(fieldnames)))
+            writer = csv.DictWriter(outfile, headers)
             writer.writeheader()
+            writer.writerows(records)
 
-            for image in images:
-                writer.writerow({**{'isic_id': image['isic_id']}, **image['metadata']})
-
-        with (outdir / 'attributions.csv').open('w') as outfile:
-            writer = csv.DictWriter(outfile, ['isic_id', 'license', 'attribution'])
-            writer.writeheader()
-
-            for image in images:
-                writer.writerow(
-                    {
-                        'isic_id': image['isic_id'],
-                        'license': image['copyright_license'],
-                        'attribution': image['attribution'],
-                    }
-                )
+        with (outdir / 'attribution.txt').open('w') as outfile:
+            # TODO: os.linesep?
+            outfile.write('\n\n'.join(get_attributions(records)))
 
     click.echo()
     click.secho(f'Successfully downloaded {nice_num_images} images to {outdir}/.', fg='green')
@@ -129,6 +115,6 @@ def download(
         fg='green',
     )
     click.secho(
-        f'Successfully wrote {nice_num_images} attribution records to {outdir/"attribution.csv"}.',
+        f'Successfully wrote attributions to {outdir/"attribution.txt"}.',
         fg='green',
     )
