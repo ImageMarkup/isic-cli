@@ -45,7 +45,6 @@ def mock_images(mocker, isolated_filesystem, outdir):
 
 
 def test_image_download(cli_run, isolated_filesystem, outdir, mock_images):
-    print(isolated_filesystem)
     result = cli_run(['image', 'download', outdir])
 
     assert result.exit_code == 0, result.exception
