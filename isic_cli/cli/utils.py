@@ -56,7 +56,7 @@ def _extract_metadata(
             }
         )
 
-        if progress and task:
+        if progress is not None and task is not None:
             progress.update(task, advance=1)
 
     return base_fields + list(sorted(metadata_fields)), metadata
