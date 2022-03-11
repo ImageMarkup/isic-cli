@@ -11,11 +11,11 @@ from click import UsageError, get_current_context
 from requests.exceptions import HTTPError
 
 from isic_cli.cli.accession import accession as accession_group
-from isic_cli.cli.auth import auth as auth_group
 from isic_cli.cli.collection import collection as collection_group
 from isic_cli.cli.context import IsicContext
 from isic_cli.cli.image import image as image_group
 from isic_cli.cli.metadata import metadata as metadata_group
+from isic_cli.cli.user import user as user_group
 from isic_cli.io.http import get_users_me
 from isic_cli.oauth import get_oauth_client
 from isic_cli.session import get_session
@@ -121,10 +121,10 @@ def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_ch
 
 
 cli.add_command(accession_group, name='accession')
-cli.add_command(auth_group, name='auth')
 cli.add_command(collection_group, name='collection')
 cli.add_command(image_group, name='image')
 cli.add_command(metadata_group, name='metadata')
+cli.add_command(user_group, name='user')
 
 
 def main():

@@ -7,7 +7,7 @@ A command line tool for interacting with the [ISIC Archive](https://isic-archive
 
 ``` sh
 pip install isic-cli
-isic auth login
+isic user login
 ```
 
 

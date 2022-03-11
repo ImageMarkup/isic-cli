@@ -7,11 +7,11 @@ from isic_cli.cli.context import IsicContext
 
 @click.group(short_help='Manage authentication with the ISIC Archive.')
 @click.pass_obj
-def auth(ctx):
+def user(ctx):
     pass
 
 
-@auth.command()
+@user.command()
 @click.pass_obj
 def login(obj: IsicContext):
     """Login to the ISIC Archive."""
@@ -22,14 +22,14 @@ def login(obj: IsicContext):
         click.echo('Success!')
 
 
-@auth.command()
+@user.command()
 @click.pass_obj
 def logout(obj: IsicContext):
     """Logout of the ISIC Archive."""
     obj.oauth.logout()
 
 
-@auth.command(hidden=True)
+@user.command(hidden=True)
 @click.pass_obj
 def print_token(obj: IsicContext):
     obj.oauth._load()

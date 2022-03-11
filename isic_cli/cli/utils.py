@@ -11,7 +11,7 @@ def suggest_guest_login(f):
     def decorator(ctx: IsicContext, **kwargs):
         if not ctx.user:
             click.echo(
-                "Psst, you're logged out. Logging in with `isic auth login` might return more data.\n",  # noqa: E501
+                "Psst, you're logged out. Logging in with `isic user login` might return more data.\n",  # noqa: E501
                 err=True,
             )
         f(ctx, **kwargs)
@@ -23,7 +23,7 @@ def require_login(f):
     def decorator(ctx: IsicContext, **kwargs):
         if not ctx.user:
             click.echo(
-                'This command requires a logged in user, use the `isic auth login` command to continue.',  # noqa: E501
+                'This command requires a logged in user, use the `isic user login` command to continue.',  # noqa: E501
                 err=True,
             )
             sys.exit(1)

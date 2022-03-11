@@ -28,7 +28,7 @@ def test_new_version(
     mocker.patch('isic_cli.utils.version.newest_version_available', return_value=latest_version)
 
     # The command is arbitrary, it just normally exits 0 with no mocking necessary
-    result = cli_run(['auth', 'print-token'])
+    result = cli_run(['user', 'print-token'])
 
     assert result.exit_code == expected_exit_code
     assert output_pattern in result.output
