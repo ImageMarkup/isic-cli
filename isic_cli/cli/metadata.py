@@ -111,9 +111,21 @@ def validate(csv_path: Path):
     type=IntRange(min=0),
     help='Use a value of 0 to disable the limit.',
 )
+@click.option(
+    '-o',
+    '--outfile',
+    type=click.Path(file_okay=True, dir_okay=False, path_type=Path),
+    help='A filepath to write the output CSV to.',
+)
 @click.pass_obj
 @suggest_guest_login
-def download(ctx: IsicContext, search: Union[None, str], collections: Union[None, str], limit: int):
+def download(
+    ctx: IsicContext,
+    search: Union[None, str],
+    collections: Union[None, str],
+    limit: int,
+    outfile: Path,
+):
     """
     Download metadata from the ISIC Archive.
 
@@ -139,7 +151,12 @@ def download(ctx: IsicContext, search: Union[None, str], collections: Union[None
         headers, records = _extract_metadata(images, progress, task)
 
     if records:
-        writer = csv.DictWriter(sys.stdout, headers)
+        if outfile:
+            stream = click.open_file(outfile, 'w')
+        else:
+            stream = click.get_text_stream('stdout')
+
+        writer = csv.DictWriter(stream, headers)
         writer.writeheader()
         for record in records:
             writer.writerow(record)
