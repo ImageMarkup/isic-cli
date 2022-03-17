@@ -27,7 +27,7 @@ DOMAINS = {
     'prod': 'https://api.isic-archive.com',
 }
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('isic_cli')
 
 
 @click.group(context_settings={'help_option_names': ['-h', '--help']}, no_args_is_help=True)

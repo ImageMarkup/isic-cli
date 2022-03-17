@@ -4,7 +4,7 @@ from typing import Optional
 
 from retryable_requests import RetryableSession
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('isic_cli')
 
 
 class IsicCliSession(RetryableSession):
