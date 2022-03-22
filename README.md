@@ -16,7 +16,7 @@ isic user login
 ### Downloading images
 
 ``` sh
-isic image download  # downloads the entire archive, images and metadata, to images/
+isic image download images/  # downloads the entire archive, images and metadata, to images/
 
 # optionally filter the results
 isic image download --search 'diagnosis:melanoma' images/
