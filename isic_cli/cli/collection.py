@@ -65,7 +65,7 @@ def collection(ctx: IsicContext):
 @click.pass_obj
 @suggest_guest_login
 def list_(ctx: IsicContext):
-    table = Table('ID', 'Name', 'Public', 'Official', 'Locked', 'DOI')
+    table = Table('ID', 'Name', 'Public', 'Pinned', 'Locked', 'DOI')
 
     collections = sorted(get_collections(ctx.session), key=lambda coll: coll['name'])
     for collection in collections:
@@ -73,7 +73,7 @@ def list_(ctx: IsicContext):
             str(collection['id']),
             collection['name'],
             str(collection['public']),
-            str(collection['official']),
+            str(collection['pinned']),
             str(collection['locked']),
             str(collection['doi']),
         )
