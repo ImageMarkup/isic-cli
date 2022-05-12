@@ -6,7 +6,7 @@ A command line tool for interacting with the [ISIC Archive](https://isic-archive
 ## Quickstart
 
 ``` sh
-pip install isic-cli
+pip install isic-cli  # requires python >= 3.9
 isic user login
 ```
 
