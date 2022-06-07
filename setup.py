@@ -47,7 +47,7 @@ setup(
         'retryable-requests',
         'rich',
         'django-s3-file-field-client',
-        'typer',
+        'tenacity',
     ],
     extras_require={
         'dev': [
