@@ -2,14 +2,28 @@ import logging
 import time
 from typing import Optional
 
+from requests.packages.urllib3.util.retry import Retry
 from retryable_requests import RetryableSession
 
 logger = logging.getLogger('isic_cli')
 
 
+# The same as retryable-requests DEFAULT_RETRY_STRATEGY with an
+# increased backoff factor.
+ISIC_RETRY_STRATEGY = Retry(
+    total=5,
+    status_forcelist=[429, 500, 502, 503, 504],
+    backoff_factor=5,
+    redirect=False,
+    raise_on_status=False,
+)
+
+
 class IsicCliSession(RetryableSession):
     def __init__(self, *args, **kwargs) -> None:
         from isic_cli.utils.version import get_version
+
+        kwargs.setdefault('retry_strategy', ISIC_RETRY_STRATEGY)
 
         super().__init__(*args, **kwargs)
 
