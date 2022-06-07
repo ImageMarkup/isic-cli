@@ -1,5 +1,7 @@
 import logging
 from pathlib import Path
+import shutil
+from tempfile import NamedTemporaryFile
 from typing import Iterable, Optional, Union
 
 from more_itertools import chunked
@@ -127,8 +129,12 @@ def download_image(image: dict, to: Path, progress, task) -> None:
         r = session.get(image['urls']['full'], stream=True)
         r.raise_for_status()
 
-        with open(to / f'{image["isic_id"]}.JPG', 'wb') as outfile:
+        temp_file_name = None
+        with NamedTemporaryFile(dir=to, prefix='.isic-partial.', delete=False) as outfile:
+            temp_file_name = outfile.name
             for chunk in r.iter_content(1024 * 1024 * 5):
                 outfile.write(chunk)
+
+        shutil.move(temp_file_name, to / f'{image["isic_id"]}.JPG')
 
     progress.update(task, advance=1)

@@ -1,3 +1,4 @@
+import atexit
 import csv
 import itertools
 from pathlib import Path
@@ -14,6 +15,11 @@ from isic_cli.cli.context import IsicContext
 from isic_cli.cli.types import SearchString
 from isic_cli.cli.utils import _extract_metadata, get_attributions, suggest_guest_login
 from isic_cli.io.http import download_image, get_images, get_num_images
+
+
+def cleanup_partially_downloaded_files(directory: Path) -> None:
+    for p in directory.glob('**/.isic-partial.*'):
+        p.unlink()
 
 
 @click.group(short_help='Manage images.')
@@ -72,6 +78,8 @@ def download(
     anatom_site_general:*torso AND image_type:dermoscopic
     """
     outdir.mkdir(exist_ok=True)
+
+    atexit.register(cleanup_partially_downloaded_files, outdir)
 
     with Progress(console=Console(file=sys.stderr)) as progress:
         archive_num_images = get_num_images(ctx.session, search, collections)
