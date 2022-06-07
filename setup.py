@@ -35,6 +35,8 @@ setup(
     packages=find_packages(),
     entry_points={'console_scripts': ['isic = isic_cli.cli:main']},
     install_requires=[
+        'click',
+        'django-s3-file-field-client',
         'girder-cli-oauth-client',
         'humanize',
         'isic-metadata',
@@ -46,8 +48,7 @@ setup(
         'requests',
         'retryable-requests',
         'rich',
-        'django-s3-file-field-client',
-        'typer',
+        'tenacity',
     ],
     extras_require={
         'dev': [

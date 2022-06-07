@@ -1,9 +1,20 @@
+import logging
 from pathlib import Path
 from typing import Iterable, Optional, Union
 
 from more_itertools import chunked
+from requests.exceptions import ConnectionError
+from tenacity import (
+    before_sleep_log,
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from isic_cli.session import IsicCliSession
+
+logger = logging.getLogger('isic_cli')
 
 
 def get_users_me(session: IsicCliSession) -> Optional[dict]:
@@ -101,6 +112,14 @@ def get_num_images(
     return r.json()['count']
 
 
+# see https://github.com/danlamanna/retryable-requests/issues/10 to understand the
+# scenario which requires additional retry logic.
+@retry(
+    retry=retry_if_exception_type(ConnectionError),
+    wait=wait_exponential(multiplier=1, min=3, max=10),
+    stop=stop_after_attempt(5),
+    before_sleep=before_sleep_log(logger, logging.DEBUG),
+)
 def download_image(image: dict, to: Path, progress, task) -> None:
     # intentionally don't pass auth headers, since these are s3 signed urls that
     # already contain credentials.
