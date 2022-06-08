@@ -23,7 +23,10 @@ def test_metadata_download(cli_run, mocker):
                     'isic_id': 'ISIC_0000000',
                     'attribution': 'Foo',
                     'copyright_license': 'CC-0',
-                    'metadata': {'sex': 'male', 'diagnosis': 'melanoma'},
+                    'metadata': {
+                        'acquisition': {},
+                        'clinical': {'sex': 'male', 'diagnosis': 'melanoma'},
+                    },
                 }
             ]
         ),

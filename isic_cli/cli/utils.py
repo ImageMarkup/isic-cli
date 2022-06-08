@@ -44,7 +44,8 @@ def _extract_metadata(
     metadata_fields = set()
 
     for image in images:
-        metadata_fields |= set(image.get('metadata', {}).keys())
+        metadata_fields |= set(image['metadata']['acquisition'].keys())
+        metadata_fields |= set(image['metadata']['clinical'].keys())
         metadata.append(
             {
                 **{
@@ -52,7 +53,8 @@ def _extract_metadata(
                     'attribution': image['attribution'],
                     'copyright_license': image['copyright_license'],
                 },
-                **image['metadata'],
+                **image['metadata']['acquisition'],
+                **image['metadata']['clinical'],
             }
         )
 
