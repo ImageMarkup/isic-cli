@@ -36,7 +36,10 @@ def mock_images(mocker, isolated_filesystem, outdir):
                     'isic_id': 'ISIC_0000000',
                     'copyright_license': 'CC-0',
                     'attribution': 'some-institution',
-                    'metadata': {'sex': 'male', 'diagnosis': 'melanoma'},
+                    'metadata': {
+                        'acquisition': {},
+                        'clinical': {'sex': 'male', 'diagnosis': 'melanoma'},
+                    },
                 }
             ]
         ),
