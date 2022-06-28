@@ -39,7 +39,7 @@ setup(
         'django-s3-file-field-client',
         'girder-cli-oauth-client',
         'humanize',
-        'isic-metadata',
+        'isic-metadata>=0.0.6',
         'joblib',
         'more-itertools',
         'numpy',
