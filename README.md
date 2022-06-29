@@ -1,7 +1,7 @@
 # isic-cli
 [![PyPI](https://img.shields.io/pypi/v/isic-cli)](https://pypi.org/project/isic-cli/)
 
-A command line tool for interacting with the [ISIC Archive](https://isic-archive.com).
+The official command line tool for interacting with the [ISIC Archive](https://isic-archive.com).
 
 ## Quickstart
 
