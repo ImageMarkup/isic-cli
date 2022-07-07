@@ -92,6 +92,7 @@ def get_images(
     next_page = (
         f'images/search/?query={search if search else ""}'
         + f'&collections={collections if collections else ""}'
+        + '&use_cursor_pagination=1'
     )
 
     while next_page:
