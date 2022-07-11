@@ -32,7 +32,10 @@ def image(ctx):
     name='download', help='Download a set of images and metadata, optionally filtering results.'
 )
 @click.option(
-    '-s', '--search', type=SearchString(), help='e.g. "diagnosis:melanoma AND age_approx:50"'
+    '-s',
+    '--search',
+    type=SearchString(),
+    help='e.g. \'diagnosis:"solar lentigo" AND age_approx:50\'',
 )
 @click.option(
     '-c',

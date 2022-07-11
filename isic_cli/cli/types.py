@@ -14,7 +14,7 @@ class SearchString(click.ParamType):
 
     def convert(self, value, param, ctx):
         r = ctx.obj.session.get('images/search/', params={'query': value, 'limit': 1})
-        if r.status_code == 400 and 'query' in r.json():
+        if r.status_code == 400 and 'detail' in r.json() and 'query' in r.json()['detail']:
             self.fail('Invalid search query string "%s"' % value, param, ctx)
         return value
 
