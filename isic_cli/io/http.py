@@ -86,14 +86,8 @@ def bulk_collection_operation(
     return results
 
 
-def get_images(
-    session: IsicCliSession, search: Optional[str] = None, collections: Optional[str] = None
-) -> Iterable[dict]:
-    next_page = (
-        f'images/search/?query={search if search else ""}'
-        + f'&collections={collections if collections else ""}'
-        + '&use_cursor_pagination=1'
-    )
+def get_images(session: IsicCliSession, search: str = '', collections: str = '') -> Iterable[dict]:
+    next_page = f'images/search/?query={search}&collections={collections}&use_cursor_pagination=1'
 
     while next_page:
         r = session.get(next_page)
@@ -102,12 +96,10 @@ def get_images(
         next_page = r.json()['next']
 
 
-def get_num_images(
-    session: IsicCliSession, search: Optional[str] = None, collections: Optional[str] = None
-) -> int:
+def get_num_images(session: IsicCliSession, search: str = '', collections: str = '') -> int:
     params = {
-        'query': search if search else '',
-        'collections': collections if collections else '',
+        'query': search,
+        'collections': collections,
         'limit': 1,
     }
     r = session.get('images/search/', params=params)
