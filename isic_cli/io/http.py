@@ -87,7 +87,7 @@ def bulk_collection_operation(
 
 
 def get_images(session: IsicCliSession, search: str = '', collections: str = '') -> Iterable[dict]:
-    next_page = f'images/search/?query={search}&collections={collections}&use_cursor_pagination=1'
+    next_page = f'images/search/?query={search}&collections={collections}'
 
     while next_page:
         r = session.get(next_page)
