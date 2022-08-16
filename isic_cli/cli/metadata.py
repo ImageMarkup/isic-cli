@@ -3,7 +3,7 @@ import csv
 import itertools
 from pathlib import Path
 import sys
-from typing import OrderedDict, Union
+from typing import OrderedDict
 
 import click
 from click.types import IntRange
@@ -92,12 +92,17 @@ def validate(csv_path: Path):
 
 @metadata.command(name='download')
 @click.option(
-    '-s', '--search', type=SearchString(), help='e.g. "diagnosis:melanoma AND age_approx:50"'
+    '-s',
+    '--search',
+    type=SearchString(),
+    default='',
+    help='e.g. "diagnosis:melanoma AND age_approx:50"',
 )
 @click.option(
     '-c',
     '--collections',
     type=CommaSeparatedIdentifiers(),
+    default='',
     help=(
         'Limit the images based on a comma separated list of collection ids e.g. 2,17,42. '
         'See isic collection list to obtain ids.'
@@ -121,8 +126,8 @@ def validate(csv_path: Path):
 @suggest_guest_login
 def download(
     ctx: IsicContext,
-    search: Union[None, str],
-    collections: Union[None, str],
+    search: str,
+    collections: str,
     limit: int,
     outfile: Path,
 ):

@@ -35,6 +35,7 @@ def image(ctx):
     '-s',
     '--search',
     type=SearchString(),
+    default='',
     help='e.g. \'diagnosis:"solar lentigo" AND age_approx:50\'',
 )
 @click.option(

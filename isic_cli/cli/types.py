@@ -23,7 +23,7 @@ class CommaSeparatedIdentifiers(click.ParamType):
     name = 'comma_separated_identifiers'
 
     def convert(self, value, param, ctx):
-        if not re.match(r'^(\d+)(,\d+)*$', value):
+        if value != '' and not re.match(r'^(\d+)(,\d+)*$', value):
             self.fail('Improperly formatted value "%s".' % value, param, ctx)
         return value
 
