@@ -7,7 +7,7 @@ The official command line tool for interacting with the [ISIC Archive](https://i
 
 ``` sh
 pip install isic-cli  # requires python >= 3.9
-isic user login
+isic user login  # optional
 ```
 
 
