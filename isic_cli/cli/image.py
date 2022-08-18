@@ -83,7 +83,11 @@ def download(
     """
     outdir.mkdir(exist_ok=True)
 
+    # remove partially downloaded files on exit
     atexit.register(cleanup_partially_downloaded_files, outdir)
+    # remove already existing partially downloaded files now, because there are scenarios
+    # (crashes) where they may not have gotten cleaned up.
+    cleanup_partially_downloaded_files(outdir)
 
     with Progress(console=Console(file=sys.stderr)) as progress:
         archive_num_images = get_num_images(ctx.session, search, collections)
