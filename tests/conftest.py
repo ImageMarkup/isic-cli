@@ -16,6 +16,12 @@ def cli_run(runner):
     return functools.partial(runner.invoke, cli)
 
 
+@pytest.fixture
+def isolated_filesystem(runner):
+    with runner.isolated_filesystem():
+        yield
+
+
 @pytest.fixture()
 def mock_user(mocker):
     from girder_cli_oauth_client import GirderCliOAuthClient

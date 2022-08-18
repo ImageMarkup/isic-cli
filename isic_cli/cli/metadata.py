@@ -157,9 +157,9 @@ def download(
 
     if records:
         if outfile:
-            stream = click.open_file(outfile, 'w')
+            stream = click.open_file(outfile, 'w', encoding='utf8')
         else:
-            stream = click.get_text_stream('stdout')
+            stream = click.get_text_stream('stdout', encoding='utf8')
 
         writer = csv.DictWriter(stream, headers)
         writer.writeheader()

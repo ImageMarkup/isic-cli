@@ -111,12 +111,12 @@ def download(
             Parallel()(delayed(download_image)(image, outdir, progress, task2) for image in images)
 
         headers, records = _extract_metadata(images)
-        with (outdir / 'metadata.csv').open('w') as outfile:
+        with (outdir / 'metadata.csv').open('w', encoding='utf8') as outfile:
             writer = csv.DictWriter(outfile, headers)
             writer.writeheader()
             writer.writerows(records)
 
-        with (outdir / 'attribution.txt').open('w') as outfile:
+        with (outdir / 'attribution.txt').open('w', encoding='utf8') as outfile:
             # TODO: os.linesep?
             outfile.write('\n\n'.join(get_attributions(records)))
 
