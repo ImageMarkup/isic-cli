@@ -119,13 +119,13 @@ def download_image(image: dict, to: Path, progress, task) -> None:
     dest_path = to / f'{image["isic_id"]}.JPG'
 
     # Avoid re downloading the image if one of the same name/size exists. This is a decent
-    # enough proxy for detecting file differences without going throw a hashing mechanism.
+    # enough proxy for detecting file differences without going through a hashing mechanism.
     if dest_path.exists() and dest_path.stat().st_size == image['files']['full']['size']:
         progress.update(task, advance=1)
         return
 
-    # intentionally don't pass auth headers, since these are s3 signed urls that
-    # already contain credentials.
+    # intentionally omit auth headers, since these are s3 signed urls that already contain
+    # credentials.
     with IsicCliSession() as session:
         r = session.get(image['files']['full']['url'], stream=True)
         r.raise_for_status()
