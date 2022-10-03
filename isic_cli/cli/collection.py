@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def _parse_isic_ids(ctx, param, value) -> list[str]:
-    isic_ids = set((line.strip() for line in value.read().splitlines() if line.strip() != ''))
+    isic_ids = {line.strip() for line in value.read().splitlines() if line.strip() != ''}
     for isic_id in isic_ids:
         if not re.match(r'^ISIC_\d{7}$', isic_id):
             click.secho(f'Found invalidly formatted ISIC ID: "{isic_id}"', err=True, fg='red')
