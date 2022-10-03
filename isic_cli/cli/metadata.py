@@ -1,9 +1,8 @@
-from collections import defaultdict
+from collections import OrderedDict, defaultdict
 import csv
 import itertools
 from pathlib import Path
 import sys
-from typing import OrderedDict
 
 import click
 from click.types import IntRange

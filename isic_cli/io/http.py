@@ -1,8 +1,9 @@
+from collections.abc import Iterable
 import logging
 from pathlib import Path
 import shutil
 from tempfile import NamedTemporaryFile
-from typing import Iterable, Optional, Union
+from typing import Optional, Union
 
 from more_itertools import chunked
 from requests.exceptions import ConnectionError
