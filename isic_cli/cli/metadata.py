@@ -110,10 +110,10 @@ def validate(csv_path: Path):
 @click.option(
     '-l',
     '--limit',
-    default=1_000,
+    default=0,
     metavar='INTEGER',
     type=IntRange(min=0),
-    help='Use a value of 0 to disable the limit.',
+    help='Download at most LIMIT metadata records. Use a value of 0 to download all records.',
 )
 @click.option(
     '-o',
