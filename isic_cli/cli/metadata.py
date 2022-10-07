@@ -103,17 +103,17 @@ def validate(csv_path: Path):
     type=CommaSeparatedIdentifiers(),
     default='',
     help=(
-        'Limit the images based on a comma separated list of collection ids e.g. 2,17,42. '
+        'Filter the images based on a comma separated list of collection ids e.g. 2,17,42. '
         'See isic collection list to obtain ids.'
     ),
 )
 @click.option(
     '-l',
     '--limit',
-    default=1_000,
+    default=0,
     metavar='INTEGER',
     type=IntRange(min=0),
-    help='Use a value of 0 to disable the limit.',
+    help='Download at most LIMIT metadata records. Use a value of 0 to download all records.',
 )
 @click.option(
     '-o',
