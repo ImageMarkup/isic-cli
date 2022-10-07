@@ -103,7 +103,7 @@ def validate(csv_path: Path):
     type=CommaSeparatedIdentifiers(),
     default='',
     help=(
-        'Limit the images based on a comma separated list of collection ids e.g. 2,17,42. '
+        'Filter the images based on a comma separated list of collection ids e.g. 2,17,42. '
         'See isic collection list to obtain ids.'
     ),
 )

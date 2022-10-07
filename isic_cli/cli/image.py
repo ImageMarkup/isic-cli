@@ -43,7 +43,7 @@ def image(ctx):
     '--collections',
     default='',
     help=(
-        'Limit the images based on a comma separated string of collection'
+        'Filter the images based on a comma separated string of collection'
         ' ids (see isic collection list).'
     ),
 )
