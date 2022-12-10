@@ -19,15 +19,15 @@ from isic_cli.cli.utils import _extract_metadata, suggest_guest_login
 from isic_cli.io.http import get_images, get_num_images
 
 
-@click.group(short_help='Manage metadata.')
+@click.group(short_help="Manage metadata.")
 @click.pass_obj
 def metadata(obj):
     pass
 
 
-@metadata.command(name='validate')
+@metadata.command(name="validate")
 @click.argument(
-    'csv_path',
+    "csv_path",
     type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True, path_type=Path),
 )
 def validate(csv_path: Path):
@@ -51,37 +51,37 @@ def validate(csv_path: Path):
             MetadataRow.parse_obj(row)
         except Exception as e:
             for error in e.errors():
-                column = error['loc'][0]
-                column_problems[(column, error['msg'])].append(i)
+                column = error["loc"][0]
+                column_problems[(column, error["msg"])].append(i)
 
     errors = OrderedDict(sorted(column_problems.items()))
 
     if errors:
-        table = Table(title='Errors found')
+        table = Table(title="Errors found")
 
-        table.add_column('Field', justify='right', style='cyan', no_wrap=True)
-        table.add_column('Error', style='magenta')
-        table.add_column('Num instances', justify='right', style='green')
-        table.add_column('Rows', justify='right', style='green')
+        table.add_column("Field", justify="right", style="cyan", no_wrap=True)
+        table.add_column("Error", style="magenta")
+        table.add_column("Num instances", justify="right", style="green")
+        table.add_column("Rows", justify="right", style="green")
 
         last_row_field = None
         for k, v in errors.items():
-            field = k[0] if last_row_field != k[0] else ''
+            field = k[0] if last_row_field != k[0] else ""
             last_row_field = k[0]
-            rows_affected = ', '.join(map(str, v[:5]))
-            end = ', etc' if len(v) > 5 else ''
-            table.add_row(field, k[1], str(len(v)), f'{rows_affected}{end}')
+            rows_affected = ", ".join(map(str, v[:5]))
+            end = ", etc" if len(v) > 5 else ""
+            table.add_row(field, k[1], str(len(v)), f"{rows_affected}{end}")
 
         console.print(table)
 
         sys.exit(1)
     else:
-        click.secho('No structural errors found!', fg='green')
+        click.secho("No structural errors found!", fg="green")
 
     unstructured_columns = get_unstructured_columns(df)
     if unstructured_columns:
-        table = Table(title='Unrecognized Fields')
-        table.add_column('Field', justify='left', style='cyan', no_wrap=True)
+        table = Table(title="Unrecognized Fields")
+        table.add_column("Field", justify="left", style="cyan", no_wrap=True)
 
         for field in unstructured_columns:
             table.add_row(field)
@@ -89,37 +89,37 @@ def validate(csv_path: Path):
         console.print(table)
 
 
-@metadata.command(name='download')
+@metadata.command(name="download")
 @click.option(
-    '-s',
-    '--search',
+    "-s",
+    "--search",
     type=SearchString(),
-    default='',
+    default="",
     help='e.g. "diagnosis:melanoma AND age_approx:50"',
 )
 @click.option(
-    '-c',
-    '--collections',
+    "-c",
+    "--collections",
     type=CommaSeparatedIdentifiers(),
-    default='',
+    default="",
     help=(
-        'Filter the images based on a comma separated list of collection ids e.g. 2,17,42. '
-        'See isic collection list to obtain ids.'
+        "Filter the images based on a comma separated list of collection ids e.g. 2,17,42. "
+        "See isic collection list to obtain ids."
     ),
 )
 @click.option(
-    '-l',
-    '--limit',
+    "-l",
+    "--limit",
     default=0,
-    metavar='INTEGER',
+    metavar="INTEGER",
     type=IntRange(min=0),
-    help='Download at most LIMIT metadata records. Use a value of 0 to download all records.',
+    help="Download at most LIMIT metadata records. Use a value of 0 to download all records.",
 )
 @click.option(
-    '-o',
-    '--outfile',
+    "-o",
+    "--outfile",
     type=click.Path(file_okay=True, dir_okay=False, path_type=Path),
-    help='A filepath to write the output CSV to.',
+    help="A filepath to write the output CSV to.",
 )
 @click.pass_obj
 @suggest_guest_login
@@ -150,15 +150,15 @@ def download(
 
     with Progress(console=Console(file=sys.stderr)) as progress:
         task = progress.add_task(
-            f'Downloading metadata records ({nice_num_images})', total=download_num_images
+            f"Downloading metadata records ({nice_num_images})", total=download_num_images
         )
         headers, records = _extract_metadata(images, progress, task)
 
     if records:
         if outfile:
-            stream = click.open_file(outfile, 'w', encoding='utf8')
+            stream = click.open_file(outfile, "w", encoding="utf8")
         else:
-            stream = click.get_text_stream('stdout', encoding='utf8')
+            stream = click.get_text_stream("stdout", encoding="utf8")
 
         writer = csv.DictWriter(stream, headers)
         writer.writeheader()

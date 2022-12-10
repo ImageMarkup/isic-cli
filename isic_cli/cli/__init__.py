@@ -22,42 +22,42 @@ from isic_cli.session import get_session
 from isic_cli.utils.version import check_for_newer_version, get_version
 
 DOMAINS = {
-    'dev': 'http://127.0.0.1:8000',
-    'sandbox': 'https://api-sandbox.isic-archive.com',
-    'prod': 'https://api.isic-archive.com',
+    "dev": "http://127.0.0.1:8000",
+    "sandbox": "https://api-sandbox.isic-archive.com",
+    "prod": "https://api.isic-archive.com",
 }
 
-logger = logging.getLogger('isic_cli')
+logger = logging.getLogger("isic_cli")
 
 
-@click.group(context_settings={'help_option_names': ['-h', '--help']}, no_args_is_help=True)
+@click.group(context_settings={"help_option_names": ["-h", "--help"]}, no_args_is_help=True)
 @click.option(
-    '--guest', is_flag=True, default=False, help='Simulate a non logged in user.', hidden=True
+    "--guest", is_flag=True, default=False, help="Simulate a non logged in user.", hidden=True
 )
 @click.option(
-    '--sandbox',
+    "--sandbox",
     is_flag=True,
     default=False,
-    help='Execute against the ISIC Archive sandbox.',
+    help="Execute against the ISIC Archive sandbox.",
     hidden=True,
-    envvar='ISIC_SANDBOX',
+    envvar="ISIC_SANDBOX",
 )
 @click.option(
-    '--dev',
+    "--dev",
     is_flag=True,
     default=False,
-    help='Execute against a dev ISIC Archive environment.',
+    help="Execute against a dev ISIC Archive environment.",
     hidden=True,
-    envvar='ISIC_DEV',
+    envvar="ISIC_DEV",
 )
 @click.option(
-    '--no-version-check',
+    "--no-version-check",
     is_flag=True,
     default=False,
-    help='Disable the version upgrade check.',
+    help="Disable the version upgrade check.",
     hidden=True,
 )
-@click.option('-v', '--verbose', is_flag=True, help='Enable verbose mode.')
+@click.option("-v", "--verbose", is_flag=True, help="Enable verbose mode.")
 @click.version_option()
 @click.pass_context
 def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_check: bool):
@@ -66,26 +66,26 @@ def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_ch
 
     if verbose:
         HTTPConnection.debuglevel = 1
-        requests_log = logging.getLogger('requests.packages.urllib3')
+        requests_log = logging.getLogger("requests.packages.urllib3")
         requests_log.addHandler(logging.StreamHandler(sys.stderr))
         requests_log.setLevel(logging.DEBUG)
         logger.setLevel(logging.DEBUG)
 
     if sandbox and dev:
-        raise UsageError('Illegal usage: --sandbox is mutually exclusive with --dev.')
+        raise UsageError("Illegal usage: --sandbox is mutually exclusive with --dev.")
 
-    env = 'prod'
+    env = "prod"
     if sandbox:
-        env = 'sandbox'
+        env = "sandbox"
     elif dev:
-        env = 'dev'
+        env = "dev"
 
     if no_version_check:
-        logger.warning('Disabling the version check could cause errors.')
+        logger.warning("Disabling the version check could cause errors.")
     else:
         check_for_newer_version()
 
-    oauth = get_oauth_client(f'{DOMAINS[env]}/oauth')
+    oauth = get_oauth_client(f"{DOMAINS[env]}/oauth")
 
     if not guest:
         try:
@@ -97,11 +97,11 @@ def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_ch
             logger.debug(e)
             oauth.logout()
             click.secho(
-                'Something went wrong with restoring a login, you may need to log back in.',
-                fg='yellow',
+                "Something went wrong with restoring a login, you may need to log back in.",
+                fg="yellow",
             )
 
-    with get_session(f'{DOMAINS[env]}/api/v2/', oauth.auth_headers) as session:
+    with get_session(f"{DOMAINS[env]}/api/v2/", oauth.auth_headers) as session:
         user = None
         if oauth.auth_headers:
             try:
@@ -120,11 +120,11 @@ def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_ch
         )
 
 
-cli.add_command(accession_group, name='accession')
-cli.add_command(collection_group, name='collection')
-cli.add_command(image_group, name='image')
-cli.add_command(metadata_group, name='metadata')
-cli.add_command(user_group, name='user')
+cli.add_command(accession_group, name="accession")
+cli.add_command(collection_group, name="collection")
+cli.add_command(image_group, name="image")
+cli.add_command(metadata_group, name="metadata")
+cli.add_command(user_group, name="user")
 
 
 def main():
@@ -133,8 +133,8 @@ def main():
     except Exception:
         click.echo(
             click.style(
-                'The following unexpected error occurred while attempting your operation:\n',
-                fg='red',
+                "The following unexpected error occurred while attempting your operation:\n",
+                fg="red",
             ),
             err=True,
         )
@@ -142,31 +142,31 @@ def main():
         click.echo(traceback.format_exc(), err=True)
 
         ctx = get_current_context(silent=True)
-        env = '-'
-        user = '-'
+        env = "-"
+        user = "-"
 
         if ctx and ctx.obj:
-            env = ctx.obj['env']
+            env = ctx.obj["env"]
 
             if ctx.obj.user:
-                user = ctx.obj.user['id']
+                user = ctx.obj.user["id"]
 
         click.echo(f'isic-cli: v{get_version() or "-"}', err=True)
-        click.echo(f'python:   v{platform.python_version()}', err=True)
-        click.echo(f'time:     {datetime.utcnow().isoformat()}', err=True)
-        click.echo(f'os:       {platform.platform()}', err=True)
-        click.echo(f'env:      {env}', err=True)
-        click.echo(f'user:     {user}', err=True)
+        click.echo(f"python:   v{platform.python_version()}", err=True)
+        click.echo(f"time:     {datetime.utcnow().isoformat()}", err=True)
+        click.echo(f"os:       {platform.platform()}", err=True)
+        click.echo(f"env:      {env}", err=True)
+        click.echo(f"user:     {user}", err=True)
         click.echo(f'command:  isic {" ".join(sys.argv[1:])}\n', err=True)
 
         click.echo(
             click.style(
-                'This is a bug in isic-cli and should be reported. You can open an issue below: ',
-                fg='yellow',
+                "This is a bug in isic-cli and should be reported. You can open an issue below: ",
+                fg="yellow",
             ),
             err=True,
         )
         click.echo(
-            'https://github.com/ImageMarkup/isic-cli/issues/new',
+            "https://github.com/ImageMarkup/isic-cli/issues/new",
             err=True,
         )

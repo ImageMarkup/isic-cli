@@ -10,26 +10,26 @@ from isic_cli.io.http import get_cohort, get_collection
 
 
 class SearchString(click.ParamType):
-    name = 'search_string'
+    name = "search_string"
 
     def convert(self, value, param, ctx):
-        r = ctx.obj.session.get('images/search/', params={'query': value, 'limit': 1})
-        if r.status_code == 400 and 'detail' in r.json() and 'query' in r.json()['detail']:
+        r = ctx.obj.session.get("images/search/", params={"query": value, "limit": 1})
+        if r.status_code == 400 and "detail" in r.json() and "query" in r.json()["detail"]:
             self.fail('Invalid search query string "%s"' % value, param, ctx)
         return value
 
 
 class CommaSeparatedIdentifiers(click.ParamType):
-    name = 'comma_separated_identifiers'
+    name = "comma_separated_identifiers"
 
     def convert(self, value, param, ctx):
-        if value != '' and not re.match(r'^(\d+)(,\d+)*$', value):
+        if value != "" and not re.match(r"^(\d+)(,\d+)*$", value):
             self.fail('Improperly formatted value "%s".' % value, param, ctx)
         return value
 
 
 class CollectionId(IntParamType):
-    name = 'collection_id'
+    name = "collection_id"
 
     def __init__(self, locked_okay: Optional[bool] = False) -> None:
         super().__init__()
@@ -46,15 +46,15 @@ class CollectionId(IntParamType):
             else:
                 raise
 
-        if collection['locked'] and not self.locked_okay:
-            click.secho(f'"{collection["name"]}" is locked for modifications.', err=True, fg='red')
+        if collection["locked"] and not self.locked_okay:
+            click.secho(f'"{collection["name"]}" is locked for modifications.', err=True, fg="red")
             sys.exit(1)
 
         return value
 
 
 class CohortId(IntParamType):
-    name = 'cohort_id'
+    name = "cohort_id"
 
     def convert(self, value: str, param, ctx) -> str:
         try:

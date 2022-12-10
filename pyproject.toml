@@ -6,7 +6,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.black]
 line-length = 100
-skip-string-normalization = true
 target-version = ["py39"]
 exclude='\.eggs|\.git|\.mypy_cache|\.tox|\.venv|_build|buck-out|build|dist|\.direnv'
 

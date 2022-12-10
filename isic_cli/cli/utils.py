@@ -23,7 +23,7 @@ def require_login(f):
     def decorator(ctx: IsicContext, **kwargs):
         if not ctx.user:
             click.echo(
-                'This command requires a logged in user, use the `isic user login` command to continue.',  # noqa: E501
+                "This command requires a logged in user, use the `isic user login` command to continue.",  # noqa: E501
                 err=True,
             )
             sys.exit(1)
@@ -40,21 +40,21 @@ def _extract_metadata(
     images: Iterable[dict], progress=None, task=None
 ) -> tuple[list[str], list[dict]]:
     metadata = []
-    base_fields = ['isic_id', 'attribution', 'copyright_license']
+    base_fields = ["isic_id", "attribution", "copyright_license"]
     metadata_fields = set()
 
     for image in images:
-        metadata_fields |= set(image['metadata']['acquisition'].keys())
-        metadata_fields |= set(image['metadata']['clinical'].keys())
+        metadata_fields |= set(image["metadata"]["acquisition"].keys())
+        metadata_fields |= set(image["metadata"]["clinical"].keys())
         metadata.append(
             {
                 **{
-                    'isic_id': image['isic_id'],
-                    'attribution': image['attribution'],
-                    'copyright_license': image['copyright_license'],
+                    "isic_id": image["isic_id"],
+                    "attribution": image["attribution"],
+                    "copyright_license": image["copyright_license"],
                 },
-                **image['metadata']['acquisition'],
-                **image['metadata']['clinical'],
+                **image["metadata"]["acquisition"],
+                **image["metadata"]["clinical"],
             }
         )
 
@@ -65,9 +65,9 @@ def _extract_metadata(
 
 
 def get_attributions(images: Iterable[dict]) -> list[str]:
-    counter = Counter(r['attribution'] for r in images)
+    counter = Counter(r["attribution"] for r in images)
     # sort by the number of images descending, then the name of the institution ascending
     attributions = sorted(counter.most_common(), key=lambda v: (-v[1], v[0]))
     # push anonymous attributions to the end
-    attributions = sorted(attributions, key=lambda v: 1 if v[0] == 'Anonymous' else 0)
+    attributions = sorted(attributions, key=lambda v: 1 if v[0] == "Anonymous" else 0)
     return [x[0] for x in attributions]
