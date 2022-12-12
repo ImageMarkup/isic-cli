@@ -5,7 +5,7 @@ import click
 from isic_cli.cli.context import IsicContext
 
 
-@click.group(short_help='Manage authentication with the ISIC Archive.')
+@click.group(short_help="Manage authentication with the ISIC Archive.")
 @click.pass_obj
 def user(ctx):
     pass
@@ -19,7 +19,7 @@ def login(obj: IsicContext):
         click.echo(f'Hello {obj.user["email"]}!')
     else:
         obj.oauth.login()
-        click.echo('Success!')
+        click.echo("Success!")
 
 
 @user.command()

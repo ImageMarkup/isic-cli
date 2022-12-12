@@ -27,13 +27,13 @@ def mock_user(mocker):
     from girder_cli_oauth_client import GirderCliOAuthClient
 
     def maybe_restore_login(self):
-        return {'Authorization': 'fake-credentials'}
+        return {"Authorization": "fake-credentials"}
 
     @property
     def auth_headers(self):
-        return {'Authorization': 'fake-credentials'}
+        return {"Authorization": "fake-credentials"}
 
-    mocker.patch.object(GirderCliOAuthClient, 'maybe_restore_login', maybe_restore_login)
-    mocker.patch.object(GirderCliOAuthClient, 'auth_headers', auth_headers)
+    mocker.patch.object(GirderCliOAuthClient, "maybe_restore_login", maybe_restore_login)
+    mocker.patch.object(GirderCliOAuthClient, "auth_headers", auth_headers)
 
-    mocker.patch('isic_cli.cli.get_users_me', return_value={'email': 'fakeuser@email.test'})
+    mocker.patch("isic_cli.cli.get_users_me", return_value={"email": "fakeuser@email.test"})

@@ -18,45 +18,45 @@ from isic_cli.io.http import download_image, get_images, get_num_images
 
 
 def cleanup_partially_downloaded_files(directory: Path) -> None:
-    for p in directory.glob('**/.isic-partial.*'):
+    for p in directory.glob("**/.isic-partial.*"):
         p.unlink()
 
 
-@click.group(short_help='Manage images.')
+@click.group(short_help="Manage images.")
 @click.pass_obj
 def image(ctx):
     pass
 
 
 @image.command(
-    name='download', help='Download a set of images and metadata, optionally filtering results.'
+    name="download", help="Download a set of images and metadata, optionally filtering results."
 )
 @click.option(
-    '-s',
-    '--search',
+    "-s",
+    "--search",
     type=SearchString(),
-    default='',
-    help='e.g. \'diagnosis:"solar lentigo" AND age_approx:50\'',
+    default="",
+    help="e.g. 'diagnosis:\"solar lentigo\" AND age_approx:50'",
 )
 @click.option(
-    '-c',
-    '--collections',
-    default='',
+    "-c",
+    "--collections",
+    default="",
     help=(
-        'Filter the images based on a comma separated string of collection'
-        ' ids (see isic collection list).'
+        "Filter the images based on a comma separated string of collection"
+        " ids (see isic collection list)."
     ),
 )
 @click.option(
-    '-l',
-    '--limit',
+    "-l",
+    "--limit",
     default=0,
-    metavar='INTEGER',
+    metavar="INTEGER",
     type=IntRange(min=0),
-    help='Download at most LIMIT images. Use a value of 0 to download all images.',
+    help="Download at most LIMIT images. Use a value of 0 to download all images.",
 )
 @click.argument(
-    'outdir',
+    "outdir",
     type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
 )
 @click.pass_obj
@@ -95,11 +95,11 @@ def download(
         nice_num_images = intcomma(download_num_images)
 
         task1 = progress.add_task(
-            f'Downloading image information ({nice_num_images} total)',
+            f"Downloading image information ({nice_num_images} total)",
             total=download_num_images,
         )
         task2 = progress.add_task(
-            f'Downloading image files ({nice_num_images} total)', total=download_num_images
+            f"Downloading image files ({nice_num_images} total)", total=download_num_images
         )
         images_iterator = itertools.islice(
             get_images(ctx.session, search, collections), download_num_images
@@ -111,26 +111,26 @@ def download(
             images.append(image)
             progress.update(task1, advance=1)
 
-        with parallel_backend('threading'):
+        with parallel_backend("threading"):
             Parallel()(delayed(download_image)(image, outdir, progress, task2) for image in images)
 
         headers, records = _extract_metadata(images)
-        with (outdir / 'metadata.csv').open('w', encoding='utf8') as outfile:
+        with (outdir / "metadata.csv").open("w", encoding="utf8") as outfile:
             writer = csv.DictWriter(outfile, headers)
             writer.writeheader()
             writer.writerows(records)
 
-        with (outdir / 'attribution.txt').open('w', encoding='utf8') as outfile:
+        with (outdir / "attribution.txt").open("w", encoding="utf8") as outfile:
             # TODO: os.linesep?
-            outfile.write('\n\n'.join(get_attributions(records)))
+            outfile.write("\n\n".join(get_attributions(records)))
 
     click.echo()
-    click.secho(f'Successfully downloaded {nice_num_images} images to {outdir}/.', fg='green')
+    click.secho(f"Successfully downloaded {nice_num_images} images to {outdir}/.", fg="green")
     click.secho(
         f'Successfully wrote {nice_num_images} metadata records to {outdir/"metadata.csv"}.',
-        fg='green',
+        fg="green",
     )
     click.secho(
         f'Successfully wrote attributions to {outdir/"attribution.txt"}.',
-        fg='green',
+        fg="green",
     )
