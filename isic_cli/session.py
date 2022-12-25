@@ -11,7 +11,7 @@ logger = logging.getLogger("isic_cli")
 # The same as retryable-requests DEFAULT_RETRY_STRATEGY with an
 # increased backoff factor.
 ISIC_RETRY_STRATEGY = Retry(
-    total=5,
+    total=15,
     status_forcelist=[429, 500, 502, 503, 504],
     backoff_factor=5,
     redirect=False,
@@ -35,6 +35,8 @@ class IsicCliSession(RetryableSession):
         )
 
     def request(self, *args, **kwargs):
+        kwargs.setdefault("timeout", (3.05, 15))
+
         start = time.time()
         r = super().request(*args, **kwargs)
         end = time.time()
