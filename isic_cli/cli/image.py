@@ -83,7 +83,7 @@ def download(
 
     anatom_site_general:*torso AND image_type:dermoscopic
     """
-    outdir.mkdir(exist_ok=True)
+    outdir.mkdir(parents=True, exist_ok=True)
 
     # remove partially downloaded files on exit
     atexit.register(cleanup_partially_downloaded_files, outdir)
