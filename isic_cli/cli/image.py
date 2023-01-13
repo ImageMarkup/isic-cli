@@ -19,7 +19,9 @@ from isic_cli.io.http import download_image, get_images, get_num_images
 
 def cleanup_partially_downloaded_files(directory: Path) -> None:
     for p in directory.glob("**/.isic-partial.*"):
-        p.unlink()
+        # missing_ok=True because it's possible that another thread moved the temporary file to
+        # its final destination after listing it but before unlinking.
+        p.unlink(missing_ok=True)
 
 
 @click.group(short_help="Manage images.")
