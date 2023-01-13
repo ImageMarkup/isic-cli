@@ -1,13 +1,15 @@
 import atexit
 import csv
+import functools
 import itertools
+from multiprocessing.pool import ThreadPool
+import os
 from pathlib import Path
 import sys
 
 import click
 from click.types import IntRange
 from humanize import intcomma
-from joblib import Parallel, delayed, parallel_backend
 from rich.console import Console
 from rich.progress import Progress
 
@@ -113,8 +115,10 @@ def download(
             images.append(image)
             progress.update(task1, advance=1)
 
-        with parallel_backend("threading"):
-            Parallel()(delayed(download_image)(image, outdir, progress, task2) for image in images)
+        # the futures ThreadPoolExecutor doesn't allow one to easily Ctrl-c
+        thread_pool = ThreadPool(max(10, os.cpu_count() or 10))
+        func = functools.partial(download_image, to=outdir, progress=progress, task=task2)
+        thread_pool.map(func, images)
 
         headers, records = _extract_metadata(images)
         with (outdir / "metadata.csv").open("w", encoding="utf8") as outfile:

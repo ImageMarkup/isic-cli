@@ -41,7 +41,6 @@ setup(
         "girder-cli-oauth-client",
         "humanize",
         "isic-metadata>=0.0.6",
-        "joblib",
         "more-itertools",
         "numpy",
         "packaging",
