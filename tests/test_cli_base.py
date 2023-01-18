@@ -1,6 +1,8 @@
 from packaging.version import Version
 import pytest
 
+from isic_cli.cli import main
+
 
 def test_base_command(cli_run):
     result = cli_run()
@@ -32,3 +34,27 @@ def test_new_version(
 
     assert result.exit_code == expected_exit_code
     assert output_pattern in result.output
+
+
+@pytest.mark.parametrize(
+    "send_bug_report,capture_exception_sent",
+    [
+        ["y", 1],
+        ["n", 0],
+    ],
+)
+def test_sentry_error_capture(mocker, send_bug_report, capture_exception_sent):
+    from isic_cli import cli
+
+    def _exception():
+        raise Exception("foo")
+
+    mocker.patch("isic_cli.cli.capture_exception", side_effect=None)
+    spy = mocker.spy(cli, "capture_exception")
+
+    mocker.patch("isic_cli.cli.cli", side_effect=_exception)
+    mocker.patch("isic_cli.cli.click.prompt", return_value=send_bug_report)
+
+    main()
+
+    assert spy.call_count == capture_exception_sent
