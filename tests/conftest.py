@@ -6,6 +6,11 @@ import pytest
 from isic_cli.cli import cli
 
 
+@pytest.fixture(autouse=True)
+def mock_sentry_setup(mocker):
+    mocker.patch("isic_cli.cli._sentry_setup", return_value=None)
+
+
 @pytest.fixture
 def runner():
     return CliRunner()

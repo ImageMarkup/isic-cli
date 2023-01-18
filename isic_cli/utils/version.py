@@ -20,6 +20,11 @@ def get_version() -> Optional[Version]:
         return None
 
 
+def is_dev_install():
+    version = get_version()
+    return not version or version.dev
+
+
 def upgrade_type(from_version: Version, to_version: Version) -> Optional[str]:
     if to_version.major > from_version.major:
         return "major"
