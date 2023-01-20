@@ -48,6 +48,7 @@ setup(
         "requests",
         "retryable-requests",
         "rich",
+        "sentry-sdk",
         "tenacity",
     ],
     extras_require={

@@ -28,7 +28,31 @@ def test_new_version(
     mocker.patch("isic_cli.utils.version.newest_version_available", return_value=latest_version)
 
     # The command is arbitrary, it just normally exits 0 with no mocking necessary
-    result = cli_run(["user", "print-token"])
+    result = cli_run(["user", "print-token"], catch_exceptions=False)
 
     assert result.exit_code == expected_exit_code
     assert output_pattern in result.output
+
+
+@pytest.mark.parametrize(
+    "send_bug_report,capture_exception_sent",
+    [
+        ["y", 1],
+        ["n", 0],
+    ],
+)
+def test_sentry_error_capture(mocker, send_bug_report, capture_exception_sent):
+    # Note: _sentry_setup is always mocked
+    from isic_cli import cli
+    from isic_cli.cli import main
+
+    def _exception():
+        raise Exception("foo")
+
+    mocker.patch("isic_cli.cli.cli", side_effect=_exception)
+    mocker.patch("isic_cli.cli.click.prompt", return_value=send_bug_report)
+    mocker.patch("isic_cli.cli.is_dev_install", return_value=False)
+
+    spy = mocker.spy(cli, "capture_exception")
+    main()
+    assert spy.call_count == capture_exception_sent
