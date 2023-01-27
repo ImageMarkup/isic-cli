@@ -5,7 +5,6 @@ from typing import Optional
 
 import click
 from packaging.version import Version
-from pkg_resources import parse_version
 import requests
 from requests.exceptions import RequestException
 
@@ -14,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 def get_version() -> Optional[Version]:
     try:
-        return parse_version(version("isic-cli"))
+        return Version(version("isic-cli"))
     except PackageNotFoundError:
         # package is not installed
         return None
@@ -34,10 +33,14 @@ def upgrade_type(from_version: Version, to_version: Version) -> Optional[str]:
         return "micro"
 
 
-def newest_version_available() -> Optional[Version]:
+def _pypi_releases():
     r = requests.get("https://pypi.org/pypi/isic-cli/json", timeout=(5, 5))
     r.raise_for_status()
-    releases = [parse_version(v) for v in r.json()["releases"].keys()]
+    return r.json()["releases"]
+
+
+def newest_version_available() -> Optional[Version]:
+    releases = [Version(v) for v in _pypi_releases().keys()]
     real_releases = [x for x in releases if not x.is_prerelease and not x.is_devrelease]
     if real_releases:
         return sorted(real_releases)[-1]
