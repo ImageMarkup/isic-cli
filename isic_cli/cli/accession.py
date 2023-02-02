@@ -34,7 +34,6 @@ def upload(
     accession: Path,
     json_: bool,
 ):
-
     console = Console(stderr=True)
     with console.status("Uploading"):
         from isic_cli.cli import DOMAINS
