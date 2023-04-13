@@ -54,6 +54,7 @@ class IsicCliSession(RetryableSession):
 def get_session(
     base_url: str = "https://api.isic-archive.com/api/v2/", headers: Optional[dict] = None
 ) -> IsicCliSession:
+    logger.debug(f"Establishing requests session with {base_url}")
     session = IsicCliSession(base_url)
     if headers:
         session.headers.update(headers)
