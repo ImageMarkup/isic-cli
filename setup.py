@@ -36,7 +36,8 @@ setup(
     packages=find_packages(),
     entry_points={"console_scripts": ["isic = isic_cli.cli:main"]},
     install_requires=[
-        "click",
+        # we use the path_type=Path feature from click which was added in Click 8
+        "click>=8",
         "django-s3-file-field-client",
         "girder-cli-oauth-client",
         "humanize",
