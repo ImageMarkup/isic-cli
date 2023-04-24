@@ -10,6 +10,7 @@ import sys
 import click
 from click.types import IntRange
 from humanize import intcomma
+from more_itertools.more import chunked
 from rich.console import Console
 from rich.progress import Progress
 
@@ -98,28 +99,22 @@ def download(
         archive_num_images = get_num_images(ctx.session, search, collections)
         download_num_images = archive_num_images if limit == 0 else min(archive_num_images, limit)
         nice_num_images = intcomma(download_num_images)
-
-        task1 = progress.add_task(
-            f"Downloading image information ({nice_num_images} total)",
+        task = progress.add_task(
+            f"Downloading images (and metadata) ({nice_num_images} total)",
             total=download_num_images,
         )
-        task2 = progress.add_task(
-            f"Downloading image files ({nice_num_images} total)", total=download_num_images
-        )
+        # the futures ThreadPoolExecutor doesn't allow one to easily Ctrl-c
+        thread_pool = ThreadPool(max(10, os.cpu_count() or 10))
         images_iterator = itertools.islice(
             get_images(ctx.session, search, collections), download_num_images
         )
-        images = []
 
         # See comment above _extract_metadata for why this is necessary
-        for image in images_iterator:
-            images.append(image)
-            progress.update(task1, advance=1)
-
-        # the futures ThreadPoolExecutor doesn't allow one to easily Ctrl-c
-        thread_pool = ThreadPool(max(10, os.cpu_count() or 10))
-        func = functools.partial(download_image, to=outdir, progress=progress, task=task2)
-        thread_pool.map(func, images)
+        images = []
+        func = functools.partial(download_image, to=outdir, progress=progress, task=task)
+        for image_chunk in chunked(images_iterator, 100):
+            images.extend(image_chunk)
+            thread_pool.map(func, image_chunk)
 
         headers, records = _extract_metadata(images)
         with (outdir / "metadata.csv").open("w", encoding="utf8") as outfile:
