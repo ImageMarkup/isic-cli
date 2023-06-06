@@ -6,7 +6,7 @@ from tempfile import NamedTemporaryFile
 from typing import Optional, Union
 
 from more_itertools import chunked
-from requests.exceptions import ConnectionError
+from requests.exceptions import ChunkedEncodingError, ConnectionError
 from tenacity import (
     before_sleep_log,
     retry,
@@ -111,7 +111,7 @@ def get_num_images(session: IsicCliSession, search: str = "", collections: str =
 # see https://github.com/danlamanna/retryable-requests/issues/10 to understand the
 # scenario which requires additional retry logic.
 @retry(
-    retry=retry_if_exception_type(ConnectionError),
+    retry=retry_if_exception_type((ConnectionError, ChunkedEncodingError)),
     wait=wait_exponential(multiplier=1, min=3, max=10),
     stop=stop_after_attempt(5),
     before_sleep=before_sleep_log(logger, logging.DEBUG),
