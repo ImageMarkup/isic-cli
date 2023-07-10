@@ -1,0 +1,30 @@
+name: package
+on: push
+jobs:
+  package:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install tox
+        run: |
+          pip install --upgrade pip
+          pip install tox
+      - name: Run packaging step
+        run: |
+          tox -e package
+      - name: Upload binary to release
+        run: |
+          gh release upload \
+            v6.1.0 \
+            "$(ls $GITHUB_WORKSPACE/build/*/release/install/isic*)#${{ runner.os }} executable" \
+            --clobber
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
