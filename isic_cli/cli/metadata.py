@@ -1,5 +1,6 @@
 from collections import OrderedDict, defaultdict
 import csv
+import io
 import itertools
 from pathlib import Path
 import sys
@@ -27,18 +28,17 @@ def metadata(obj):
 
 @metadata.command(name="validate")
 @click.argument(
-    "csv_path",
-    type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True, path_type=Path),
+    "csv_file",
+    type=click.File("rb"),
 )
-def validate(csv_path: Path):
+def validate(csv_file: io.BufferedReader):
     """Validate metadata from a local csv."""
     # These imports are slow, inline them.
     import numpy as np
     import pandas as pd
 
     console = Console()
-    with open(csv_path) as csv:
-        df = pd.read_csv(csv, header=0)
+    df = pd.read_csv(csv_file, header=0)
 
     # pydantic expects None for the absence of a value, not NaN
     df = df.replace({np.nan: None})
