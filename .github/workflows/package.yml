@@ -19,22 +19,9 @@ jobs:
       - name: Run packaging step
         run: |
           tox -e package
-
-      - name: Uniquely name binary (non-Windows)
+      - name: Zip and upload binary
         run: |
-          mv ./dist/isic ./dist/isic-${{ runner.os }}
-        if: runner.os != 'Windows'
-      - name: Uniquely name binary (Windows)
-        run: |
-          mv ./dist/isic.exe ./dist/isic-${{ runner.os }}.exe
-        if: runner.os == 'Windows'
-      - name: Upload binary to release
-        run: |
-          gh release upload \
-            v6.1.0 \
-            "./$(ls)#${{ runner.os }} executable" \
-            --clobber
+          .github/zip_and_upload_package.sh ${{ runner.os }} v6.1.0 ${{ github.event.release.tag_name }}
         shell: bash
-        working-directory: dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
