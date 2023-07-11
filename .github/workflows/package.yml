@@ -1,5 +1,7 @@
 name: package
-on: push
+on:
+  release:
+    types: [published]
 jobs:
   package:
     runs-on: ${{ matrix.os }}
@@ -21,7 +23,7 @@ jobs:
           tox -e package
       - name: Zip and upload binary
         run: |
-          .github/zip_and_upload_package.sh ${{ runner.os }} v6.1.0 ${{ github.event.release.tag_name }}
+          .github/zip_and_upload_package.sh ${{ runner.os }} ${{ github.event.release.tag_name }}
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
