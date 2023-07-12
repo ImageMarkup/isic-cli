@@ -66,13 +66,11 @@ def check_for_newer_version():
         if upgrade_type_available == "major":
             click.secho(
                 """There is a new major version of isic-cli available.
-You must upgrade before continuing.
-If you are using pip, then you can upgrade by running the following command:
+You must upgrade before continuing. See https://github.com/ImageMarkup/isic-cli for instructions.
 """,
                 fg="yellow",
                 err=True,
             )
-            click.echo(click.style("pip install --upgrade isic-cli", fg="green"), err=True)
             sys.exit(1)
         elif upgrade_type_available == "minor":
             click.secho(
