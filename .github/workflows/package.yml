@@ -1,0 +1,29 @@
+name: package
+on:
+  release:
+    types: [published]
+jobs:
+  package:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install tox
+        run: |
+          pip install --upgrade pip
+          pip install tox
+      - name: Run packaging step
+        run: |
+          tox -e package
+      - name: Zip and upload binary
+        run: |
+          .github/zip_and_upload_package.sh ${{ runner.os }} ${{ github.event.release.tag_name }}
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

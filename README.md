@@ -1,17 +1,16 @@
 # isic-cli
-[![PyPI](https://img.shields.io/pypi/v/isic-cli)](https://pypi.org/project/isic-cli/)
 
 The official command line tool for interacting with the [ISIC Archive](https://isic-archive.com).
 
-## Quickstart
+## Installation
+- Download the [latest isic-cli release](https://github.com/ImageMarkup/isic-cli/releases/latest).
+- Extract the executable to a location where it can be invoked from the command line.
 
-``` sh
-pip install isic-cli  # requires python >= 3.9
-isic user login  # optional
-```
-
+If running on macOS, you may need to [add the executable to the list of trusted software](https://support.apple.com/guide/mac-help/apple-cant-check-app-for-malicious-software-mchleab3a043/mac) to launch isic-cli in the same way you would any other registered app.
 
 ## Common use cases
+
+Note: `isic` will be `isic.exe` on Windows.
 
 ### Downloading images
 
