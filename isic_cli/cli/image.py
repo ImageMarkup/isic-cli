@@ -1,8 +1,8 @@
 import atexit
+from concurrent.futures import ThreadPoolExecutor
 import csv
 import functools
 import itertools
-from multiprocessing.pool import ThreadPool
 import os
 from pathlib import Path
 import sys
@@ -103,7 +103,7 @@ def download(
             f"Downloading images (and metadata) ({nice_num_images} total)",
             total=download_num_images,
         )
-        # the futures ThreadPoolExecutor doesn't allow one to easily Ctrl-c
+
         images_iterator = itertools.islice(
             get_images(ctx.session, search, collections), download_num_images
         )
@@ -111,7 +111,7 @@ def download(
         # See comment above _extract_metadata for why this is necessary
         images = []
         func = functools.partial(download_image, to=outdir, progress=progress, task=task)
-        with ThreadPool(max(10, os.cpu_count() or 10)) as thread_pool:
+        with ThreadPoolExecutor(max(10, os.cpu_count() or 10)) as thread_pool:
             for image_chunk in chunked(images_iterator, 100):
                 images.extend(image_chunk)
                 thread_pool.map(func, image_chunk)
