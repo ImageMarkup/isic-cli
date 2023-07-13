@@ -104,7 +104,6 @@ def download(
             total=download_num_images,
         )
         # the futures ThreadPoolExecutor doesn't allow one to easily Ctrl-c
-        thread_pool = ThreadPool(max(10, os.cpu_count() or 10))
         images_iterator = itertools.islice(
             get_images(ctx.session, search, collections), download_num_images
         )
@@ -112,9 +111,10 @@ def download(
         # See comment above _extract_metadata for why this is necessary
         images = []
         func = functools.partial(download_image, to=outdir, progress=progress, task=task)
-        for image_chunk in chunked(images_iterator, 100):
-            images.extend(image_chunk)
-            thread_pool.map(func, image_chunk)
+        with ThreadPool(max(10, os.cpu_count() or 10)) as thread_pool:
+            for image_chunk in chunked(images_iterator, 100):
+                images.extend(image_chunk)
+                thread_pool.map(func, image_chunk)
 
         headers, records = _extract_metadata(images)
         with (outdir / "metadata.csv").open("w", encoding="utf8") as outfile:
