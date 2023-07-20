@@ -42,3 +42,4 @@ def test_image_download(cli_run, isolated_filesystem, outdir, mock_images):
     assert os.path.exists(f"{outdir}/ISIC_0000000.JPG")
     assert os.path.exists(f"{outdir}/metadata.csv")
     assert os.path.exists(f"{outdir}/attribution.txt")
+    assert os.path.exists(f"{outdir}/licenses/CC-0.txt")

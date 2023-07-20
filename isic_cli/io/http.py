@@ -108,6 +108,12 @@ def get_num_images(session: IsicCliSession, search: str = "", collections: str =
     return r.json()["count"]
 
 
+def get_license(session: IsicCliSession, license_type: str) -> str:
+    r = session.get(f"zip-download/license-file/{license_type}/")
+    r.raise_for_status()
+    return r.text
+
+
 # see https://github.com/danlamanna/retryable-requests/issues/10 to understand the
 # scenario which requires additional retry logic.
 @retry(
