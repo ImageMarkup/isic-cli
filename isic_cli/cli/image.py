@@ -17,7 +17,7 @@ from rich.progress import Progress
 from isic_cli.cli.context import IsicContext
 from isic_cli.cli.types import CommaSeparatedIdentifiers, SearchString
 from isic_cli.cli.utils import _extract_metadata, get_attributions, suggest_guest_login
-from isic_cli.io.http import download_image, get_images, get_num_images
+from isic_cli.io.http import download_image, get_images, get_license, get_num_images
 
 
 def cleanup_partially_downloaded_files(directory: Path) -> None:
@@ -126,6 +126,12 @@ def download(
             # TODO: os.linesep?
             outfile.write("\n\n".join(get_attributions(records)))
 
+        licenses = set([record["copyright_license"] for record in records])
+        (outdir / "licenses").mkdir(exist_ok=True)
+        for license_type in licenses:
+            with (outdir / "licenses" / f"{license_type}.txt").open("w") as outfile:
+                outfile.write(get_license(ctx.session, license_type))
+
     click.echo()
     click.secho(f"Successfully downloaded {nice_num_images} images to {outdir}/.", fg="green")
     click.secho(
@@ -135,4 +141,7 @@ def download(
     click.secho(
         f'Successfully wrote attributions to {outdir/"attribution.txt"}.',
         fg="green",
+    )
+    click.secho(
+        f'Successfully wrote {len(licenses)} license(s) to {outdir/"licenses"}.', fg="green"
     )
