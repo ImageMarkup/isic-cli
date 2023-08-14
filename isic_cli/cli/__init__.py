@@ -202,6 +202,9 @@ def main():
 
         set_tag("platform", platform.system())
         set_tag("isic-env", env)
+        # https://pyinstaller.org/en/stable/runtime-information.html#run-time-information
+        set_tag("pyinstaller", getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"))
+
         set_context("operating system", {"name": platform.platform()})
         set_context("user", {"id": user})
 
