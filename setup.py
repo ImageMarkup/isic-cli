@@ -41,7 +41,7 @@ setup(
         "django-s3-file-field-client",
         "girder-cli-oauth-client",
         "humanize",
-        "isic-metadata>=0.0.6",
+        "isic-metadata>=0.1.0",
         "more-itertools",
         "numpy",
         "packaging",

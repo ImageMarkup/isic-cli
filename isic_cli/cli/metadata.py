@@ -10,6 +10,7 @@ from click.types import IntRange
 from humanize import intcomma
 from isic_metadata.metadata import MetadataRow
 from isic_metadata.utils import get_unstructured_columns
+from pydantic import ValidationError
 from rich.console import Console
 from rich.progress import Progress, track
 from rich.table import Table
@@ -48,8 +49,8 @@ def validate(csv_file: io.BufferedReader):
 
     for i, (_, row) in track(enumerate(df.iterrows(), start=2), total=len(df)):
         try:
-            MetadataRow.parse_obj(row)
-        except Exception as e:
+            MetadataRow.model_validate(row.to_dict())
+        except ValidationError as e:
             for error in e.errors():
                 column = error["loc"][0]
                 column_problems[(column, error["msg"])].append(i)
