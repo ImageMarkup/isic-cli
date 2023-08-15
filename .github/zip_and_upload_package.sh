@@ -14,7 +14,7 @@ else
 fi
 
 chmod +x $executable
-zipfile="${runner_os}-isic-cli.zip"
+zipfile="isic-cli_${runner_os}.zip"
 
 if [[ "$runner_os" = "Windows" ]]; then
     tar.exe -a -c -f $zipfile $executable
