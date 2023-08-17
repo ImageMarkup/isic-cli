@@ -39,7 +39,8 @@ setup(
         # we use the path_type=Path feature from click which was added in Click 8
         "click>=8",
         "django-s3-file-field-client",
-        "girder-cli-oauth-client",
+        # We expect girder-cli-oauth-client to drop oob support in the future
+        "girder-cli-oauth-client<1.0.0",
         "humanize",
         "isic-metadata>=0.1.0",
         "more-itertools",
