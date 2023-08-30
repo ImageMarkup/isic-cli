@@ -13,6 +13,8 @@ class SearchString(click.ParamType):
     name = "search_string"
 
     def convert(self, value, param, ctx):
+        value = super().convert(value, param, ctx)
+
         r = ctx.obj.session.get("images/search/", params={"query": value, "limit": 1})
         if r.status_code == 400 and "detail" in r.json() and "query" in r.json()["detail"]:
             self.fail('Invalid search query string "%s"' % value, param, ctx)
@@ -23,6 +25,8 @@ class CommaSeparatedIdentifiers(click.ParamType):
     name = "comma_separated_identifiers"
 
     def convert(self, value, param, ctx):
+        value = super().convert(value, param, ctx)
+
         if value != "" and not re.match(r"^(\d+)(,\d+)*$", value):
             self.fail('Improperly formatted value "%s".' % value, param, ctx)
         return value
@@ -36,6 +40,8 @@ class CollectionId(IntParamType):
         self.locked_okay = locked_okay
 
     def convert(self, value: str, param, ctx) -> str:
+        value = super().convert(value, param, ctx)
+
         try:
             collection = get_collection(ctx.obj.session, value)
         except HTTPError as e:
@@ -57,6 +63,8 @@ class CohortId(IntParamType):
     name = "cohort_id"
 
     def convert(self, value: str, param, ctx) -> str:
+        value = super().convert(value, param, ctx)
+
         try:
             get_cohort(ctx.obj.session, value)
         except HTTPError as e:
