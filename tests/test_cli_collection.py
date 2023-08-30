@@ -43,6 +43,18 @@ def test_collection_id_type_locking(mocker, locked, locked_okay, expected_exit_c
         assert "locked for modification" in result.output, result.output
 
 
+def test_collection_id_type_must_be_integer(mocker):
+    @click.command()
+    @click.argument("foo", type=CollectionId())
+    def cmd(foo):
+        pass
+
+    # magicmock is used to mock out ctx.obj
+    result = CliRunner().invoke(cmd, ["some-non-numeric-string"], obj=mocker.MagicMock())
+    assert result.exit_code == 2, result.exit_code
+    assert "is not a valid" in result.output, result.output
+
+
 def test_collection_id_type_access(mocker):
     @click.command()
     @click.argument("foo", type=CollectionId())
