@@ -159,6 +159,8 @@ def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_ch
                 if e.response.status_code == 404:
                     # perhaps a stale token
                     oauth.logout()
+                else:
+                    raise
 
         ctx.obj = IsicContext(
             oauth=oauth,
