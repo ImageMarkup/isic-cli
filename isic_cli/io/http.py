@@ -77,7 +77,7 @@ def bulk_collection_operation(
     results = {}
 
     for chunk in chunked(isic_ids, 50):
-        r = session.post(f"collections/{collection_id}/{operation}/", {"isic_ids": chunk})
+        r = session.post(f"collections/{collection_id}/{operation}/", json={"isic_ids": chunk})
         r.raise_for_status()
 
         results = _merge_summaries(results, r.json())
