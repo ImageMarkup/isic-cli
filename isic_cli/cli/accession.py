@@ -1,4 +1,5 @@
 import json
+import mimetypes
 from pathlib import Path
 import sys
 
@@ -41,10 +42,19 @@ def upload(
         s3ff_client = S3FileFieldClient(f"{DOMAINS[ctx.env]}/api/v2/s3-upload/", ctx.session)
 
         with accession.open("rb") as file_stream:
+            content_type = mimetypes.guess_type(accession.name)[0]
+
+            if content_type is None:
+                click.secho(
+                    f"Unable to determine content type for {accession.name}.", fg="red", err=True
+                )
+                sys.exit(1)
+
             field_value = s3ff_client.upload_file(
-                file_stream,
-                accession.name,
-                "ingest.Accession.original_blob",
+                file_stream=file_stream,
+                file_name=accession.name,
+                file_content_type=content_type,
+                field_id="ingest.Accession.original_blob",
             )
 
         try:
