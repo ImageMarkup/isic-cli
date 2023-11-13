@@ -36,6 +36,17 @@ def test_metadata_validate(runner, cli_run):
     assert re.search(r"Invalid sex.*bar", result.output), result.output
 
 
+def test_metadata_validate_lesions_patients(runner, cli_run):
+    with runner.isolated_filesystem():
+        with open("foo.csv", "w") as f:
+            f.write("lesion_id,patient_id\nl1,p1\nl1,p2")
+
+        result = cli_run(["metadata", "validate", "foo.csv"])
+
+    assert result.exit_code == 1, result.exception
+    assert re.search(r"belong to multiple patients", result.output), result.output
+
+
 def test_metadata_download_stdout(cli_run, mock_image_metadata):
     result = cli_run(["metadata", "download"])
     assert result.exit_code == 0, result.exception
