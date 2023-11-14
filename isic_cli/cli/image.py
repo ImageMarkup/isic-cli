@@ -135,13 +135,13 @@ def download(
     click.echo()
     click.secho(f"Successfully downloaded {nice_num_images} images to {outdir}/.", fg="green")
     click.secho(
-        f'Successfully wrote {nice_num_images} metadata records to {outdir/"metadata.csv"}.',
+        f'Successfully wrote {nice_num_images} metadata records to {outdir / "metadata.csv"}.',
         fg="green",
     )
     click.secho(
-        f'Successfully wrote attributions to {outdir/"attribution.txt"}.',
+        f'Successfully wrote attributions to {outdir / "attribution.txt"}.',
         fg="green",
     )
     click.secho(
-        f'Successfully wrote {len(licenses)} license(s) to {outdir/"licenses"}.', fg="green"
+        f'Successfully wrote {len(licenses)} license(s) to {outdir / "licenses"}.', fg="green"
     )
