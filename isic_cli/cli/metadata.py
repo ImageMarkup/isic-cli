@@ -1,4 +1,4 @@
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 import csv
 import io
 import itertools
@@ -8,7 +8,7 @@ import sys
 import click
 from click.types import IntRange
 from humanize import intcomma
-from isic_metadata.metadata import MetadataRow
+from isic_metadata.metadata import MetadataBatch, MetadataRow
 from isic_metadata.utils import get_unstructured_columns
 from pydantic import ValidationError
 from rich.console import Console
@@ -44,6 +44,10 @@ def validate(csv_file: io.BufferedReader):
     # pydantic expects None for the absence of a value, not NaN
     df = df.replace({np.nan: None})
 
+    # batch problems apply to the overall csv and can't be computed without looking at the
+    # entire csv.
+    batch_problems: list[dict] = []
+
     # keyed by column, message
     column_problems: dict[tuple[str, str], list[int]] = defaultdict(list)
 
@@ -55,10 +59,35 @@ def validate(csv_file: io.BufferedReader):
                 column = error["loc"][0]
                 column_problems[(column, error["msg"])].append(i)
 
-    errors = OrderedDict(sorted(column_problems.items()))
+    try:
+        MetadataBatch(
+            items=[
+                MetadataRow(patient_id=row.get("patient_id"), lesion_id=row.get("lesion_id"))
+                for _, row in df.iterrows()
+            ]
+        )
+    except ValidationError as e:
+        for error in e.errors():
+            batch_problems.append(error)
 
-    if errors:
-        table = Table(title="Errors found")
+    if batch_problems:
+        table = Table(title="Batch Level Errors Found")
+
+        table.add_column("Error", style="magenta")
+        table.add_column("Num instances", justify="right", style="green")
+        table.add_column("Examples")
+
+        for error in batch_problems:
+            table.add_row(
+                error["msg"],
+                str(len(error["ctx"]["examples"])),
+                ", ".join(error["ctx"]["examples"][0:3]),
+            )
+
+        console.print(table)
+
+    if column_problems:
+        table = Table(title="Row Level Errors Found")
 
         table.add_column("Field", justify="right", style="cyan", no_wrap=True)
         table.add_column("Error", style="magenta")
@@ -66,7 +95,7 @@ def validate(csv_file: io.BufferedReader):
         table.add_column("Rows", justify="right", style="green")
 
         last_row_field = None
-        for k, v in errors.items():
+        for k, v in dict(sorted(column_problems.items())).items():
             field = k[0] if last_row_field != k[0] else ""
             last_row_field = k[0]
             rows_affected = ", ".join(map(str, v[:5]))
@@ -75,6 +104,7 @@ def validate(csv_file: io.BufferedReader):
 
         console.print(table)
 
+    if batch_problems or column_problems:
         sys.exit(1)
     else:
         click.secho("No structural errors found!", fg="green")
