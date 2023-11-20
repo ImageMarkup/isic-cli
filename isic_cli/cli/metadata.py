@@ -42,7 +42,8 @@ def validate(csv_file: io.BufferedReader):
     df = pd.read_csv(csv_file, header=0)
 
     # pydantic expects None for the absence of a value, not NaN
-    df = df.replace({np.nan: None})
+    df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    df = df.replace({np.nan: None, "": None})
 
     # batch problems apply to the overall csv and can't be computed without looking at the
     # entire csv.
@@ -53,7 +54,8 @@ def validate(csv_file: io.BufferedReader):
 
     for i, (_, row) in track(enumerate(df.iterrows(), start=2), total=len(df)):
         try:
-            MetadataRow.model_validate(row.to_dict())
+            row = row.to_dict()
+            MetadataRow.model_validate({k: v for k, v in row.items() if v is not None})
         except ValidationError as e:
             for error in e.errors():
                 column = error["loc"][0]
