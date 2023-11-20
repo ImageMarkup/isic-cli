@@ -35,15 +35,10 @@ def metadata(obj):
 def validate(csv_file: io.BufferedReader):
     """Validate metadata from a local csv."""
     # These imports are slow, inline them.
-    import numpy as np
     import pandas as pd
 
     console = Console()
     df = pd.read_csv(csv_file, header=0)
-
-    # pydantic expects None for the absence of a value, not NaN
-    df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-    df = df.replace({np.nan: None, "": None})
 
     # batch problems apply to the overall csv and can't be computed without looking at the
     # entire csv.
@@ -54,8 +49,7 @@ def validate(csv_file: io.BufferedReader):
 
     for i, (_, row) in track(enumerate(df.iterrows(), start=2), total=len(df)):
         try:
-            row = row.to_dict()
-            MetadataRow.model_validate({k: v for k, v in row.items() if v is not None})
+            MetadataRow.model_validate(row.to_dict())
         except ValidationError as e:
             for error in e.errors():
                 column = error["loc"][0]
