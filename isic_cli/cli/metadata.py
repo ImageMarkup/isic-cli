@@ -8,7 +8,7 @@ import sys
 import click
 from click.types import IntRange
 from humanize import intcomma
-from isic_metadata.metadata import MetadataBatch, MetadataRow
+from isic_metadata.metadata import MetadataBatch, MetadataRow, convert_errors
 from isic_metadata.utils import get_unstructured_columns
 from pydantic import ValidationError
 from rich.console import Console
@@ -30,15 +30,22 @@ def metadata(obj):
 @metadata.command(name="validate")
 @click.argument(
     "csv_file",
-    type=click.File("rb"),
+    type=click.File("r"),
 )
 def validate(csv_file: io.BufferedReader):
     """Validate metadata from a local csv."""
-    # These imports are slow, inline them.
-    import pandas as pd
-
     console = Console()
-    df = pd.read_csv(csv_file, header=0)
+
+    # get number of rows in csv
+    num_rows = sum(1 for _ in csv_file)
+    csv_file.seek(0)
+
+    reader = csv.DictReader(csv_file)
+    headers = reader.fieldnames
+
+    if not headers:
+        click.secho("No rows found in csv!", fg="red")
+        sys.exit(1)
 
     # batch problems apply to the overall csv and can't be computed without looking at the
     # entire csv.
@@ -47,20 +54,26 @@ def validate(csv_file: io.BufferedReader):
     # keyed by column, message
     column_problems: dict[tuple[str, str], list[int]] = defaultdict(list)
 
-    for i, (_, row) in track(enumerate(df.iterrows(), start=2), total=len(df)):
+    batch_items: list[MetadataRow] = []
+
+    # start enumerate at 2 to account for header row and 1-indexing
+    for i, row in track(
+        enumerate(reader, start=2), total=num_rows, description="Validating metadata"
+    ):
+        if row.get("patient_id") or row.get("lesion_id"):
+            batch_items.append(
+                MetadataRow(patient_id=row.get("patient_id"), lesion_id=row.get("lesion_id"))
+            )
         try:
-            MetadataRow.model_validate(row.to_dict())
+            MetadataRow.model_validate(row)
         except ValidationError as e:
-            for error in e.errors():
+            for error in convert_errors(e):
                 column = error["loc"][0]
                 column_problems[(column, error["msg"])].append(i)
 
     try:
         MetadataBatch(
-            items=[
-                MetadataRow(patient_id=row.get("patient_id"), lesion_id=row.get("lesion_id"))
-                for _, row in df.iterrows()
-            ]
+            items=batch_items,
         )
     except ValidationError as e:
         for error in e.errors():
@@ -105,7 +118,7 @@ def validate(csv_file: io.BufferedReader):
     else:
         click.secho("No structural errors found!", fg="green")
 
-    unstructured_columns = get_unstructured_columns(df)
+    unstructured_columns = get_unstructured_columns(headers)
     if unstructured_columns:
         table = Table(title="Unrecognized Fields")
         table.add_column("Field", justify="left", style="cyan", no_wrap=True)
