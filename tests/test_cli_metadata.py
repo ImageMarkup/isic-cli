@@ -32,8 +32,8 @@ def test_metadata_validate(runner, cli_run):
         result = cli_run(["metadata", "validate", "foo.csv"])
 
     assert result.exit_code == 1, result.exception
-    assert re.search(r"Invalid diagnosis.*foo", result.output), result.output
-    assert re.search(r"Invalid sex.*bar", result.output), result.output
+    assert re.search(r"Unsupported value for diagnosis: 'foo'.", result.output), result.output
+    assert re.search(r"sex.*Input should be 'male' or 'female'", result.output), result.output
 
 
 def test_metadata_validate_lesions_patients(runner, cli_run):
