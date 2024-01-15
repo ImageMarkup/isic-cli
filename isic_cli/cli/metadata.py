@@ -68,7 +68,7 @@ def validate(csv_file: io.BufferedReader):
             MetadataRow.model_validate(row)
         except ValidationError as e:
             for error in convert_errors(e):
-                column = error["loc"][0]
+                column = error["loc"][0] if error["loc"] else ""
                 column_problems[(column, error["msg"])].append(i)
 
     try:
