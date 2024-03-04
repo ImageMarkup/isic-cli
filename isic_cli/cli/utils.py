@@ -11,7 +11,7 @@ def suggest_guest_login(f):
     def decorator(ctx: IsicContext, **kwargs):
         if not ctx.user:
             click.echo(
-                "Psst, you're logged out. Logging in with `isic user login` might return more data.\n",  # noqa: E501
+                "If you have been granted special permissions, logging in with `isic user login` might return more data.\n",  # noqa: E501
                 err=True,
             )
         f(ctx, **kwargs)
