@@ -42,7 +42,7 @@ setup(
         # We expect girder-cli-oauth-client to drop oob support in the future
         "girder-cli-oauth-client<1.0.0",
         "humanize",
-        "isic-metadata>=1.1.0",
+        "isic-metadata>=1.2.0",
         "more-itertools",
         "packaging",
         "requests",
