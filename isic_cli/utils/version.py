@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 from importlib.metadata import PackageNotFoundError, version
 import logging
 import sys
-from typing import Optional
 
 import click
 from packaging.version import Version
@@ -11,7 +12,7 @@ from requests.exceptions import RequestException
 logger = logging.getLogger(__name__)
 
 
-def get_version() -> Optional[Version]:
+def get_version() -> Version | None:
     try:
         return Version(version("isic-cli"))
     except PackageNotFoundError:
@@ -24,12 +25,12 @@ def is_dev_install():
     return not version or version.dev
 
 
-def upgrade_type(from_version: Version, to_version: Version) -> Optional[str]:
+def upgrade_type(from_version: Version, to_version: Version) -> str | None:
     if to_version.major > from_version.major:
         return "major"
-    elif to_version.minor > from_version.minor:
+    if to_version.minor > from_version.minor:
         return "minor"
-    elif to_version.micro > from_version.micro:
+    if to_version.micro > from_version.micro:
         return "micro"
 
 
@@ -39,8 +40,8 @@ def _pypi_releases():
     return r.json()["releases"]
 
 
-def newest_version_available() -> Optional[Version]:
-    releases = [Version(v) for v in _pypi_releases().keys()]
+def newest_version_available() -> Version | None:
+    releases = [Version(v) for v in _pypi_releases()]
     real_releases = [x for x in releases if not x.is_prerelease and not x.is_devrelease]
     if real_releases:
         return sorted(real_releases)[-1]

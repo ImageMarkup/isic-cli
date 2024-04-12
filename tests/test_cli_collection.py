@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 
 import click
@@ -9,12 +11,12 @@ from isic_cli.cli.types import CollectionId
 
 
 @pytest.mark.parametrize(
-    "locked,locked_okay,expected_exit_code",
+    ("locked", "locked_okay", "expected_exit_code"),
     [
-        [True, False, 1],
-        [True, True, 0],
-        [False, False, 0],
-        [False, True, 0],
+        (True, False, 1),
+        (True, True, 0),
+        (False, False, 0),
+        (False, True, 0),
     ],
 )
 def test_collection_id_type_locking(mocker, locked, locked_okay, expected_exit_code):
@@ -95,7 +97,8 @@ def test_collection_list(cli_run, mocker):
     assert re.search(r"5.*foo.*True.*False.*True", result.output), result.output
 
 
-def test_collection_add_images(cli_run, mocker, mock_user):
+@pytest.mark.usefixtures("_mock_user")
+def test_collection_add_images(cli_run, mocker):
     mocker.patch(
         "isic_cli.cli.types.get_collection",
         return_value={

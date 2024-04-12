@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import functools
 
 from click.testing import CliRunner
@@ -7,28 +9,28 @@ from isic_cli.cli import cli
 
 
 @pytest.fixture(autouse=True)
-def mock_sentry_setup(mocker):
+def _mock_sentry_setup(mocker):
     mocker.patch("isic_cli.cli._sentry_setup", return_value=None)
 
 
-@pytest.fixture
+@pytest.fixture()
 def runner():
     return CliRunner()
 
 
-@pytest.fixture
+@pytest.fixture()
 def cli_run(runner):
     return functools.partial(runner.invoke, cli)
 
 
-@pytest.fixture
-def isolated_filesystem(runner):
+@pytest.fixture()
+def _isolated_filesystem(runner):
     with runner.isolated_filesystem():
         yield
 
 
 @pytest.fixture()
-def mock_user(mocker):
+def _mock_user(mocker):
     from girder_cli_oauth_client import GirderCliOAuthClient
 
     def maybe_restore_login(self):

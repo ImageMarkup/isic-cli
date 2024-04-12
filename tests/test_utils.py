@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 import pytest
 
 from isic_cli.cli.utils import get_attributions
 
 
 @pytest.mark.parametrize(
-    "images,attributions",
+    ("images", "attributions"),
     [
-        [
+        (
             [
                 {"attribution": "foo"},
                 {"attribution": "bar"},
@@ -14,16 +16,16 @@ from isic_cli.cli.utils import get_attributions
                 {"attribution": "bar"},
             ],
             ["bar", "foo"],
-        ],
-        [
+        ),
+        (
             [
                 {"attribution": "foo"},
                 {"attribution": "foo"},
                 {"attribution": "bar"},
             ],
             ["foo", "bar"],
-        ],
-        [
+        ),
+        (
             [
                 {"attribution": "foo"},
                 {"attribution": "foo"},
@@ -31,8 +33,8 @@ from isic_cli.cli.utils import get_attributions
                 {"attribution": "Anonymous"},
             ],
             ["foo", "bar", "Anonymous"],
-        ],
-        [
+        ),
+        (
             [
                 {"attribution": "foo"},
                 {"attribution": "foo"},
@@ -42,7 +44,7 @@ from isic_cli.cli.utils import get_attributions
                 {"attribution": "Anonymous"},
             ],
             ["foo", "bar", "Anonymous"],
-        ],
+        ),
     ],
 )
 def test_get_attributions(images, attributions):

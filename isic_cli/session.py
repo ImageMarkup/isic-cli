@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import logging
 import time
-from typing import Optional
 
 from requests.packages.urllib3.util.retry import Retry
 from retryable_requests import RetryableSession
@@ -43,18 +44,18 @@ class IsicCliSession(RetryableSession):
 
         # TODO: this is a little confusing because retries are included in
         # these times - maybe break it out.
-        logger.debug(f"timing: {end - start}")
+        logger.debug("timing: %f", end - start)
 
         if not r.ok:
-            logger.debug(f"bad response: {r.text}")
+            logger.debug("bad response: %s", r.text)
 
         return r
 
 
 def get_session(
-    base_url: str = "https://api.isic-archive.com/api/v2/", headers: Optional[dict] = None
+    base_url: str = "https://api.isic-archive.com/api/v2/", headers: dict | None = None
 ) -> IsicCliSession:
-    logger.debug(f"Establishing requests session with {base_url}")
+    logger.debug("Establishing requests session with %s", base_url)
     session = IsicCliSession(base_url)
     if headers:
         session.headers.update(headers)
