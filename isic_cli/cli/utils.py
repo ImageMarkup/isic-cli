@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 from collections import Counter
 import sys
-from typing import Iterable
+from typing import TYPE_CHECKING
 
 import click
 
-from isic_cli.cli.context import IsicContext
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from isic_cli.cli.context import IsicContext
 
 
 def suggest_guest_login(f):
@@ -48,11 +53,9 @@ def _extract_metadata(
         metadata_fields |= set(image["metadata"]["clinical"].keys())
         metadata.append(
             {
-                **{
-                    "isic_id": image["isic_id"],
-                    "attribution": image["attribution"],
-                    "copyright_license": image["copyright_license"],
-                },
+                "isic_id": image["isic_id"],
+                "attribution": image["attribution"],
+                "copyright_license": image["copyright_license"],
                 **image["metadata"]["acquisition"],
                 **image["metadata"]["clinical"],
             }
@@ -61,7 +64,7 @@ def _extract_metadata(
         if progress is not None and task is not None:
             progress.update(task, advance=1)
 
-    return base_fields + list(sorted(metadata_fields)), metadata
+    return base_fields + sorted(metadata_fields), metadata
 
 
 def get_attributions(images: Iterable[dict]) -> list[str]:

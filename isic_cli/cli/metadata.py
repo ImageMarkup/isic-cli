@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from collections import defaultdict
 import csv
-import io
 import itertools
 from pathlib import Path
 import sys
+from typing import TYPE_CHECKING
 
 import click
 from click.types import IntRange
@@ -15,10 +17,14 @@ from rich.console import Console
 from rich.progress import Progress, track
 from rich.table import Table
 
-from isic_cli.cli.context import IsicContext
 from isic_cli.cli.types import CommaSeparatedIdentifiers, SearchString
 from isic_cli.cli.utils import _extract_metadata, suggest_guest_login
 from isic_cli.io.http import get_images, get_num_images
+
+if TYPE_CHECKING:
+    import io
+
+    from isic_cli.cli.context import IsicContext
 
 
 @click.group(short_help="Manage metadata.")
@@ -32,7 +38,7 @@ def metadata(obj):
     "csv_file",
     type=click.File("r"),
 )
-def validate(csv_file: io.BufferedReader):
+def validate(csv_file: io.TextIOWrapper):  # noqa: C901, PLR0915, PLR0912
     """Validate metadata from a local csv."""
     console = Console()
 
@@ -69,15 +75,14 @@ def validate(csv_file: io.BufferedReader):
         except ValidationError as e:
             for error in convert_errors(e):
                 column = error["loc"][0] if error["loc"] else ""
-                column_problems[(column, error["msg"])].append(i)
+                column_problems[(str(column), error["msg"])].append(i)
 
     try:
         MetadataBatch(
             items=batch_items,
         )
     except ValidationError as e:
-        for error in e.errors():
-            batch_problems.append(error)
+        batch_problems = list(e.errors())  # pyright: ignore [reportAssignmentType]
 
     if batch_problems:
         table = Table(title="Batch Level Errors Found")
@@ -196,7 +201,7 @@ def download(
 
     if records:
         if outfile:
-            stream = click.open_file(outfile, "w", encoding="utf8")
+            stream = click.open_file(outfile.name, "w", encoding="utf8")
         else:
             stream = click.get_text_stream("stdout", encoding="utf8")
 

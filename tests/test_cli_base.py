@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from packaging.version import Version
 import pytest
 
@@ -15,10 +17,10 @@ def test_base_command(cli_run):
 
 
 @pytest.mark.parametrize(
-    "current_version,latest_version,expected_exit_code,output_pattern",
+    ("current_version", "latest_version", "expected_exit_code", "output_pattern"),
     [
-        [Version("0.0.1"), Version("0.1.0"), 0, "new version"],
-        [Version("0.0.1"), Version("1.0.0"), 1, "new major version"],
+        (Version("0.0.1"), Version("0.1.0"), 0, "new version"),
+        (Version("0.0.1"), Version("1.0.0"), 1, "new major version"),
     ],
 )
 def test_new_version(
@@ -35,10 +37,10 @@ def test_new_version(
 
 
 @pytest.mark.parametrize(
-    "send_bug_report,capture_exception_sent",
+    ("send_bug_report", "capture_exception_sent"),
     [
-        ["y", 1],
-        ["n", 0],
+        ("y", 1),
+        ("n", 0),
     ],
 )
 def test_sentry_error_capture(mocker, send_bug_report, capture_exception_sent):
@@ -47,7 +49,7 @@ def test_sentry_error_capture(mocker, send_bug_report, capture_exception_sent):
     from isic_cli.cli import main
 
     def _exception():
-        raise Exception("foo")
+        raise Exception("foo")  # noqa: TRY002
 
     mocker.patch("isic_cli.cli.cli", side_effect=_exception)
     mocker.patch("isic_cli.cli.click.prompt", return_value=send_bug_report)

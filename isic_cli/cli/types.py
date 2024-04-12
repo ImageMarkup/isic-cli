@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import re
 import sys
-from typing import Optional
 
 import click
 from click.types import IntParamType
@@ -35,7 +36,7 @@ class CommaSeparatedIdentifiers(click.ParamType):
 class CollectionId(IntParamType):
     name = "collection_id"
 
-    def __init__(self, locked_okay: Optional[bool] = False) -> None:
+    def __init__(self, *, locked_okay: bool | None = False) -> None:
         super().__init__()
         self.locked_okay = locked_okay
 

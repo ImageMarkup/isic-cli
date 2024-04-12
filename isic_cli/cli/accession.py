@@ -1,17 +1,22 @@
+from __future__ import annotations
+
 import json
 import mimetypes
 from pathlib import Path
 import sys
+from typing import TYPE_CHECKING
 
 import click
 from requests.exceptions import HTTPError
 from rich.console import Console
 from s3_file_field_client import S3FileFieldClient
 
-from isic_cli.cli.context import IsicContext
 from isic_cli.cli.types import CohortId
 from isic_cli.cli.utils import require_login
 from isic_cli.io.http import create_accession
+
+if TYPE_CHECKING:
+    from isic_cli.cli.context import IsicContext
 
 
 @click.group(short_help="Manage accessions.")
@@ -33,6 +38,7 @@ def upload(
     ctx: IsicContext,
     cohort_id: int,
     accession: Path,
+    *,
     json_: bool,
 ):
     console = Console(stderr=True)

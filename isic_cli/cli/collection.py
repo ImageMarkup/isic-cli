@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import logging
 import re
 import sys
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import click
 from humanize.number import intcomma
@@ -9,10 +11,12 @@ from rich.console import Console
 from rich.progress import Progress
 from rich.table import Table
 
-from isic_cli.cli.context import IsicContext
 from isic_cli.cli.types import CollectionId
 from isic_cli.cli.utils import require_login, suggest_guest_login
 from isic_cli.io.http import bulk_collection_operation, get_collections
+
+if TYPE_CHECKING:
+    from isic_cli.cli.context import IsicContext
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +31,7 @@ def _parse_isic_ids(ctx, param, value) -> list[str]:
     return list(isic_ids)
 
 
-def _table_from_summary(summary: dict[str, list[str]], nice_map: Optional[dict] = None):
+def _table_from_summary(summary: dict[str, list[str]], nice_map: dict | None = None):
     nice_map = {} if nice_map is None else nice_map
     table = Table()
 

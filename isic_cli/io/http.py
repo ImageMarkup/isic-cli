@@ -1,9 +1,9 @@
-from collections.abc import Iterable
+from __future__ import annotations
+
 import logging
-from pathlib import Path
 import shutil
 from tempfile import NamedTemporaryFile
-from typing import Optional, Union
+from typing import TYPE_CHECKING
 
 from more_itertools import chunked
 from requests.exceptions import ChunkedEncodingError, ConnectionError
@@ -17,22 +17,26 @@ from tenacity import (
 
 from isic_cli.session import IsicCliSession
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from pathlib import Path
+
 logger = logging.getLogger("isic_cli")
 
 
-def get_users_me(session: IsicCliSession) -> Optional[dict]:
+def get_users_me(session: IsicCliSession) -> dict | None:
     r = session.get("users/me/")
     r.raise_for_status()
     return r.json()
 
 
-def get_collection(session: IsicCliSession, collection_id: Union[int, str]) -> dict:
+def get_collection(session: IsicCliSession, collection_id: int | str) -> dict:
     r = session.get(f"collections/{collection_id}/")
     r.raise_for_status()
     return r.json()
 
 
-def get_cohort(session: IsicCliSession, cohort_id: Union[int, str]) -> dict:
+def get_cohort(session: IsicCliSession, cohort_id: int | str) -> dict:
     r = session.get(f"cohorts/{cohort_id}/")
     r.raise_for_status()
     return r.json()
@@ -66,7 +70,7 @@ def _merge_summaries(a: dict[str, list[str]], b: dict[str, list[str]]) -> dict[s
     return ret
 
 
-def bulk_collection_operation(
+def bulk_collection_operation(  # noqa: PLR0913
     session: IsicCliSession,
     collection_id: int,
     operation: str,

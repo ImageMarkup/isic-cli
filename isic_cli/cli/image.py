@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import atexit
 from concurrent.futures import ThreadPoolExecutor
 import csv
@@ -6,6 +8,7 @@ import itertools
 import os
 from pathlib import Path
 import sys
+from typing import TYPE_CHECKING
 
 import click
 from click.types import IntRange
@@ -14,10 +17,12 @@ from more_itertools.more import chunked
 from rich.console import Console
 from rich.progress import Progress
 
-from isic_cli.cli.context import IsicContext
 from isic_cli.cli.types import CommaSeparatedIdentifiers, SearchString
 from isic_cli.cli.utils import _extract_metadata, get_attributions, suggest_guest_login
 from isic_cli.io.http import download_image, get_images, get_license, get_num_images
+
+if TYPE_CHECKING:
+    from isic_cli.cli.context import IsicContext
 
 
 def cleanup_partially_downloaded_files(directory: Path) -> None:
@@ -126,7 +131,7 @@ def download(
             # TODO: os.linesep?
             outfile.write("\n\n".join(get_attributions(records)))
 
-        licenses = set([record["copyright_license"] for record in records])
+        licenses = {record["copyright_license"] for record in records}
         (outdir / "licenses").mkdir(exist_ok=True)
         for license_type in licenses:
             with (outdir / "licenses" / f"{license_type}.txt").open("w") as outfile:

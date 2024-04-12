@@ -1,4 +1,6 @@
-from datetime import datetime
+from __future__ import annotations
+
+import datetime
 from http.client import HTTPConnection
 import logging
 import os
@@ -107,9 +109,9 @@ def _sentry_setup():
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose mode.")
 @click.version_option()
 @click.pass_context
-def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_check: bool):
+def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_check: bool):  # noqa: FBT001, C901, PLR0913
     logger.addHandler(logging.StreamHandler(sys.stderr))
-    logger.setLevel(logging.WARN)
+    logger.setLevel(logging.WARNING)
 
     if verbose:
         HTTPConnection.debuglevel = 1
@@ -181,7 +183,7 @@ cli.add_command(user_group, name="user")
 def main():
     try:
         cli()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         click.echo(
             click.style(
                 "The following unexpected error occurred while attempting your operation:\n",
@@ -212,7 +214,9 @@ def main():
 
         click.echo(f'isic-cli: v{get_version() or "-"}', err=True)
         click.echo(f"python:   v{platform.python_version()}", err=True)
-        click.echo(f"time:     {datetime.utcnow().isoformat()}", err=True)
+        click.echo(
+            f"time:     {datetime.datetime.now(tz=datetime.timezone.utc).isoformat()}", err=True
+        )
         click.echo(f"os:       {platform.platform()}", err=True)
         click.echo(f"env:      {env}", err=True)
         click.echo(f"user:     {user}", err=True)

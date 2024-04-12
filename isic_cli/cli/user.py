@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 import json
+from typing import TYPE_CHECKING
 
 import click
 
-from isic_cli.cli.context import IsicContext
+if TYPE_CHECKING:
+    from isic_cli.cli.context import IsicContext
 
 
 @click.group(short_help="Manage authentication with the ISIC Archive.")
@@ -32,5 +36,5 @@ def logout(obj: IsicContext):
 @user.command(hidden=True)
 @click.pass_obj
 def print_token(obj: IsicContext):
-    obj.oauth._load()
-    click.echo(json.dumps(obj.oauth._session.token, indent=4))
+    obj.oauth._load()  # noqa: SLF001
+    click.echo(json.dumps(obj.oauth._session.token, indent=4))  # noqa: SLF001
