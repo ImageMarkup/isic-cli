@@ -18,7 +18,7 @@ class SearchString(click.ParamType):
 
         r = ctx.obj.session.get("images/search/", params={"query": value, "limit": 1})
         if r.status_code == 400 and "detail" in r.json() and "query" in r.json()["detail"]:
-            self.fail('Invalid search query string "%s"' % value, param, ctx)
+            self.fail(f'Invalid search query string "{value}"', param, ctx)
         return value
 
 
@@ -29,7 +29,7 @@ class CommaSeparatedIdentifiers(click.ParamType):
         value = super().convert(value, param, ctx)
 
         if value != "" and not re.match(r"^(\d+)(,\d+)*$", value):
-            self.fail('Improperly formatted value "%s".' % value, param, ctx)
+            self.fail(f'Improperly formatted value "{value}".', param, ctx)
         return value
 
 
