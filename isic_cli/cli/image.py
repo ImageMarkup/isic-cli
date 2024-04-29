@@ -122,7 +122,7 @@ def download(
                 thread_pool.map(func, image_chunk)
 
         headers, records = _extract_metadata(images)
-        with (outdir / "metadata.csv").open("w", encoding="utf8") as outfile:
+        with (outdir / "metadata.csv").open("w", newline="", encoding="utf8") as outfile:
             writer = csv.DictWriter(outfile, headers)
             writer.writeheader()
             writer.writerows(records)

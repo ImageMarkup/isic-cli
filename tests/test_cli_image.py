@@ -45,3 +45,12 @@ def test_image_download(cli_run, outdir):
     assert Path(f"{outdir}/metadata.csv").exists()
     assert Path(f"{outdir}/attribution.txt").exists()
     assert Path(f"{outdir}/licenses/CC-0.txt").exists()
+
+
+@pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")
+def test_image_download_metadata_newlines(cli_run, outdir):
+    result = cli_run(["image", "download", outdir])
+
+    assert result.exit_code == 0, result.exception
+    with Path(f"{outdir}/metadata.csv").open() as f:
+        assert f.read().count("\n") == 2
