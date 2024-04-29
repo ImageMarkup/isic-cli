@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 import csv
 import itertools
+import os
 from pathlib import Path
 import sys
 from typing import TYPE_CHECKING
@@ -200,10 +201,11 @@ def download(
         headers, records = _extract_metadata(images, progress, task)
 
     if records:
-        if outfile:
-            stream = click.open_file(outfile.name, "w", encoding="utf8")
-        else:
-            stream = click.get_text_stream("stdout", encoding="utf8")
+        stream = (
+            sys.stdout
+            if outfile is None or os.fsdecode(outfile) == "-"
+            else Path(outfile).open("w", newline="", encoding="utf8")  # noqa: SIM115
+        )
 
         writer = csv.DictWriter(stream, headers)
         writer.writeheader()
