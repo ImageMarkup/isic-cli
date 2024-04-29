@@ -7,7 +7,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        os:
+          # Use an older Linux: https://pyinstaller.org/en/stable/usage.html#making-gnu-linux-apps-forward-compatible
+          - ubuntu-20.04
+          - macos-latest
+          - windows-latest
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
