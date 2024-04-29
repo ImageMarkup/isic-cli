@@ -1,6 +1,5 @@
 #!/bin/bash
-
-set -ex
+set -eux
 
 runner_os=$1
 tag_name=$2
@@ -17,7 +16,7 @@ chmod +x $executable
 zipfile="isic-cli_${runner_os}.zip"
 
 if [[ "$runner_os" = "Windows" ]]; then
-    tar.exe -a -c -f $zipfile $executable
+    powershell Compress-Archive $executable $zipfile
 else
     zip $zipfile $executable
 fi
