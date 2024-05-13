@@ -109,7 +109,7 @@ def _sentry_setup():
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose mode.")
 @click.version_option()
 @click.pass_context
-def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_check: bool):  # noqa: FBT001, C901, PLR0913
+def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_check: bool):  # noqa: FBT001, C901, PLR0912, PLR0913
     logger.addHandler(logging.StreamHandler(sys.stderr))
     logger.setLevel(logging.WARNING)
 
