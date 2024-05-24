@@ -127,7 +127,7 @@ def get_license(session: IsicCliSession, license_type: str) -> str:
     before_sleep=before_sleep_log(logger, logging.DEBUG),
 )
 def download_image(image: dict, to: Path, progress, task) -> None:
-    dest_path = to / f'{image["isic_id"]}.JPG'
+    dest_path = to / f'{image["isic_id"]}.jpg'
 
     # Avoid re downloading the image if one of the same name/size exists. This is a decent
     # enough proxy for detecting file differences without going through a hashing mechanism.

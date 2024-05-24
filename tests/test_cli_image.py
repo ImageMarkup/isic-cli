@@ -13,7 +13,7 @@ def outdir():
 @pytest.fixture()
 def _mock_images(mocker, _isolated_filesystem, outdir):
     def _download_image_side_effect(*args, **kwargs):
-        with (Path(outdir) / "ISIC_0000000.JPG").open("wb") as f:
+        with (Path(outdir) / "ISIC_0000000.jpg").open("wb") as f:
             f.write(b"12345")
 
     mocker.patch("isic_cli.cli.image.get_num_images", return_value=1)
@@ -41,7 +41,7 @@ def test_image_download(cli_run, outdir):
     result = cli_run(["image", "download", outdir])
 
     assert result.exit_code == 0, result.exception
-    assert Path(f"{outdir}/ISIC_0000000.JPG").exists()
+    assert Path(f"{outdir}/ISIC_0000000.jpg").exists()
     assert Path(f"{outdir}/metadata.csv").exists()
     assert Path(f"{outdir}/attribution.txt").exists()
     assert Path(f"{outdir}/licenses/CC-0.txt").exists()
