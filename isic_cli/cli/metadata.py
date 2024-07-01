@@ -201,11 +201,11 @@ def download(
         headers, records = _extract_metadata(images, progress, task)
 
     if records:
-        stream = (
-            sys.stdout
-            if outfile is None or os.fsdecode(outfile) == "-"
-            else Path(outfile).open("w", newline="", encoding="utf8")  # noqa: SIM115
-        )
+        if outfile is None or os.fsdecode(outfile) == "-":
+            sys.stdout.reconfigure(encoding="utf8")
+            stream = sys.stdout
+        else:
+            stream = Path(outfile).open("w", newline="", encoding="utf8")  # noqa: SIM115
 
         writer = csv.DictWriter(stream, headers)
         writer.writeheader()

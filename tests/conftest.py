@@ -19,8 +19,18 @@ def runner():
 
 
 @pytest.fixture()
+def runner_non_utf8():
+    return CliRunner(charset="cp1251")
+
+
+@pytest.fixture()
 def cli_run(runner):
     return functools.partial(runner.invoke, cli)
+
+
+@pytest.fixture()
+def cli_run_non_utf8(runner_non_utf8):
+    return functools.partial(runner_non_utf8.invoke, cli)
 
 
 @pytest.fixture()
