@@ -63,9 +63,7 @@ def _merge_summaries(a: dict[str, list[str]], b: dict[str, list[str]]) -> dict[s
     for k, v in a.items():
         ret[k] = v + b.get(k, [])
 
-    for k, v in b.items():
-        if k not in a:
-            ret[k] = v
+    ret.update({k: v for k, v in b.items() if k not in a})
 
     return ret
 
