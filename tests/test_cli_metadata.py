@@ -4,6 +4,7 @@ from pathlib import Path
 import re
 
 import pytest
+from pytest_lazy_fixtures import lf
 
 
 @pytest.fixture()
@@ -60,15 +61,23 @@ def test_metadata_validate_lesions_patients(runner, cli_run):
 
 
 @pytest.mark.usefixtures("_mock_image_metadata")
-def test_metadata_download_stdout(cli_run):
-    result = cli_run(["metadata", "download"])
+@pytest.mark.parametrize(
+    "cli_runner",
+    [lf("cli_run"), lf("cli_run_non_utf8")],
+)
+def test_metadata_download_stdout(cli_runner):
+    result = cli_runner(["metadata", "download"])
     assert result.exit_code == 0, result.exception
     assert re.search(r"ISIC_0000000.*Foo.*CC-0.*melanoma.*male", result.output), result.output
 
 
 @pytest.mark.usefixtures("_mock_image_metadata", "_isolated_filesystem")
-def test_metadata_download_file(cli_run):
-    result = cli_run(["metadata", "download", "-o", "foo.csv"])
+@pytest.mark.parametrize(
+    "cli_runner",
+    [lf("cli_run"), lf("cli_run_non_utf8")],
+)
+def test_metadata_download_file(cli_runner):
+    result = cli_runner(["metadata", "download", "-o", "foo.csv"])
 
     assert result.exit_code == 0, result.exception
 
@@ -79,8 +88,12 @@ def test_metadata_download_file(cli_run):
 
 
 @pytest.mark.usefixtures("_mock_image_metadata")
-def test_metadata_download_newlines(cli_run, mocker):
-    result = cli_run(["metadata", "download", "-o", "foo.csv"])
+@pytest.mark.parametrize(
+    "cli_runner",
+    [lf("cli_run"), lf("cli_run_non_utf8")],
+)
+def test_metadata_download_newlines(cli_runner, mocker):
+    result = cli_runner(["metadata", "download", "-o", "foo.csv"])
 
     assert result.exit_code == 0, result.exception
 
