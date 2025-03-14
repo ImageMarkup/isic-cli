@@ -77,3 +77,35 @@ class CohortId(IntParamType):
                 raise
 
         return value
+
+
+class WritableFilePath(click.Path):
+    name = "writable_file_path"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if not self.file_okay:
+            raise ValueError("file_okay must be True")
+        elif self.dir_okay:
+            raise ValueError("dir_okay must be False")
+
+    def convert(self, value, param, ctx):
+        value = super().convert(value, param, ctx)
+
+        # writeable checks on click.Path only apply to already existing paths, see
+        # https://github.com/pallets/click/issues/2495.
+        # check if the final path is writable before going to the effort of downloading the data.
+        if value is not None and str(value) != "-":
+            try:
+                value.parent.mkdir(parents=True, exist_ok=True)
+                with value.open("w", newline="", encoding="utf8"):
+                    pass
+            except PermissionError:
+                self.fail(f"Permission denied - cannot write to '{value}'.", param, ctx)
+            except OSError as e:
+                # this is a general catch-all for weirder issues like a read only filesystem,
+                # filenames that are too long or have invalid chars, etc.
+                self.fail(f"Cannot write to '{value}'. {e!s}", param, ctx)
+
+        return value

@@ -18,7 +18,7 @@ from rich.console import Console
 from rich.progress import Progress, track
 from rich.table import Table
 
-from isic_cli.cli.types import CommaSeparatedIdentifiers, SearchString
+from isic_cli.cli.types import CommaSeparatedIdentifiers, SearchString, WritableFilePath
 from isic_cli.cli.utils import _extract_metadata, suggest_guest_login
 from isic_cli.io.http import get_images, get_num_images
 
@@ -164,7 +164,7 @@ def validate(csv_file: io.TextIOWrapper):  # noqa: C901, PLR0915, PLR0912
 @click.option(
     "-o",
     "--outfile",
-    type=click.Path(file_okay=True, dir_okay=False, path_type=Path),
+    type=WritableFilePath(dir_okay=False, file_okay=True, writable=True, path_type=Path),
     help="A filepath to write the output CSV to.",
 )
 @click.pass_obj
