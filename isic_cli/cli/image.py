@@ -47,7 +47,7 @@ def image(ctx):
     "--search",
     type=SearchString(),
     default="",
-    help="e.g. 'diagnosis:\"solar lentigo\" AND age_approx:50'",
+    help="e.g. 'diagnosis_3:\"Melanoma Invasive\" AND age_approx:50'",
 )
 @click.option(
     "-c",
@@ -87,7 +87,7 @@ def download(
 
     Some example queries are:
 
-    age_approx:50 AND diagnosis:melanoma
+    age_approx:50 AND diagnosis_3:"Melanoma Invasive"
 
     age_approx:[20 TO 40] AND sex:male
 
