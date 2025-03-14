@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -54,3 +55,25 @@ def test_image_download_metadata_newlines(cli_run, outdir):
     assert result.exit_code == 0, result.exception
     with Path(f"{outdir}/metadata.csv").open() as f:
         assert f.read().count("\n") == 2
+
+
+@pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")
+def test_image_download_cleanup_on_interrupt(mocker, outdir):
+    from click.testing import CliRunner  # noqa: I001
+    from isic_cli.cli import cli
+
+    partial_file = Path(outdir) / ".isic-partial.ISIC_0000000.jpg"
+    partial_file.parent.mkdir(parents=True)
+
+    runner = CliRunner()
+
+    cleanup = MagicMock(side_effect=KeyboardInterrupt)
+    mocker.patch("isic_cli.cli.image.get_num_images", cleanup)
+
+    result = runner.invoke(cli, ["image", "download", outdir], standalone_mode=False)
+
+    assert cleanup.called
+    assert result.exit_code == 1
+    assert isinstance(result.exception.__cause__, KeyboardInterrupt)
+
+    assert not partial_file.exists()

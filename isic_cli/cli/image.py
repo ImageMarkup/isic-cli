@@ -7,6 +7,7 @@ import functools
 import itertools
 import os
 from pathlib import Path
+import signal
 import sys
 from typing import TYPE_CHECKING
 
@@ -94,11 +95,15 @@ def download(
     """
     outdir.mkdir(parents=True, exist_ok=True)
 
+    def signal_handler(signum, frame):
+        cleanup_partially_downloaded_files(outdir)
+        sys.exit(1)
+
     # remove partially downloaded files on exit
     atexit.register(cleanup_partially_downloaded_files, outdir)
-    # remove already existing partially downloaded files now, because there are scenarios
-    # (crashes) where they may not have gotten cleaned up.
-    cleanup_partially_downloaded_files(outdir)
+    # also remove partially downloaded files on SIGINT/SIGTERM
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     with Progress(console=Console(file=sys.stderr)) as progress:
         archive_num_images = get_num_images(ctx.session, search, collections)
