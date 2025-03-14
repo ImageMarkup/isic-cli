@@ -41,6 +41,7 @@ ignore = [
 
   # Excessive
   "RET503", # implict return
+  "RET506", # elif after raise
   "PLR2004", # magic value used in comparison
 ]
 
