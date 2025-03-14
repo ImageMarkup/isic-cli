@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 
 def cleanup_partially_downloaded_files(directory: Path) -> None:
-    for p in directory.glob("**/.isic-partial.*"):
+    for p in directory.glob(f"**/.isic-partial.{os.getpid()}.*"):
         # missing_ok=True because it's possible that another thread moved the temporary file to
         # its final destination after listing it but before unlinking.
         p.unlink(missing_ok=True)

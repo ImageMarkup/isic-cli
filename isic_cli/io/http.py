@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import shutil
 from tempfile import NamedTemporaryFile
 from typing import TYPE_CHECKING
@@ -140,7 +141,9 @@ def download_image(image: dict, to: Path, progress, task) -> None:
         r.raise_for_status()
 
         temp_file_name = None
-        with NamedTemporaryFile(dir=to, prefix=".isic-partial.", delete=False) as outfile:
+        with NamedTemporaryFile(
+            dir=to, prefix=f".isic-partial.{os.getpid()}.", delete=False
+        ) as outfile:
             temp_file_name = outfile.name
             for chunk in r.iter_content(1024 * 1024 * 5):
                 outfile.write(chunk)
