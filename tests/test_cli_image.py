@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
+
+from isic_cli.cli.image import cleanup_partially_downloaded_files
 
 
 @pytest.fixture()
@@ -58,22 +60,16 @@ def test_image_download_metadata_newlines(cli_run, outdir):
 
 
 @pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")
-def test_image_download_cleanup_on_interrupt(mocker, outdir):
-    from click.testing import CliRunner  # noqa: I001
-    from isic_cli.cli import cli
-
-    partial_file = Path(outdir) / ".isic-partial.ISIC_0000000.jpg"
+def test_image_download_cleanup(cli_run, outdir):
+    partial_file = Path(outdir) / f".isic-partial.{os.getpid()}.ISIC_0000000.jpg"
     partial_file.parent.mkdir(parents=True)
+    partial_file.touch()
 
-    runner = CliRunner()
+    result = cli_run(["image", "download", outdir])
+    assert result.exit_code == 0
 
-    cleanup = MagicMock(side_effect=KeyboardInterrupt)
-    mocker.patch("isic_cli.cli.image.get_num_images", cleanup)
-
-    result = runner.invoke(cli, ["image", "download", outdir], standalone_mode=False)
-
-    assert cleanup.called
-    assert result.exit_code == 1
-    assert isinstance(result.exception.__cause__, KeyboardInterrupt)
-
+    # this is run via atexit, but we want to test it here since we can't
+    # easily test running the command in a subprocess.
+    assert partial_file.exists()
+    cleanup_partially_downloaded_files(Path(outdir))
     assert not partial_file.exists()
