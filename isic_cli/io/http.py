@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import PurePosixPath
 import shutil
 from tempfile import NamedTemporaryFile
 from typing import TYPE_CHECKING
+from urllib.parse import urlparse
 
 from more_itertools import chunked
 from requests.exceptions import ChunkedEncodingError, ConnectionError
@@ -126,7 +128,14 @@ def get_license(session: IsicCliSession, license_type: str) -> str:
     before_sleep=before_sleep_log(logger, logging.DEBUG),
 )
 def download_image(image: dict, to: Path, progress, task) -> None:
-    dest_path = to / f'{image["isic_id"]}.jpg'
+    url = image["files"]["full"]["url"]
+    parsed_url = urlparse(url)
+    path = parsed_url.path
+    # defaulting to jpg is simply a convenience for development where the images
+    # are extension-less since they come from a synthetic image generator.
+    extension = PurePosixPath(path).suffix.lstrip(".") or "jpg"
+
+    dest_path = to / f'{image["isic_id"]}.{extension}'
 
     # Avoid re downloading the image if one of the same name/size exists. This is a decent
     # enough proxy for detecting file differences without going through a hashing mechanism.
