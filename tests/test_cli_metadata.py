@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
+import sys
 
 import pytest
 from pytest_lazy_fixtures import lf
@@ -85,6 +86,25 @@ def test_metadata_download_file(cli_runner):
         output = f.read()
 
     assert re.search(r"ISIC_0000000.*Foo.*CC-0.*melanoma.*male", output), output
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows does not support this test")
+@pytest.mark.usefixtures("_mock_image_metadata", "_isolated_filesystem")
+def test_metadata_download_file_no_write(cli_run):
+    result = cli_run(["metadata", "download", "-o", "/metadata.csv"])
+    # it's important that the exit code is 2 and not 1, because the key constraint of this
+    # functionality is that the user gets the error message before spending their time
+    # downloading the data. exit code 2 is for usage errors with click.
+    assert result.exit_code == 2, result.exception
+    assert re.search(r"Permission denied", result.output), result.output
+
+
+@pytest.mark.usefixtures("_mock_image_metadata", "_isolated_filesystem")
+def test_metadata_download_file_bad_filename(cli_run):
+    result = cli_run(["metadata", "download", "-o", f"{'1' * 255}.csv"])
+    # see comment in test_metadata_download_file_no_write for why exit code is 2
+    assert result.exit_code == 2, result.exception
+    assert re.search(r"Cannot write to", result.output), result.output
 
 
 @pytest.mark.usefixtures("_mock_image_metadata")
