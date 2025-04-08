@@ -73,3 +73,10 @@ def test_image_download_cleanup(cli_run, outdir):
     assert partial_file.exists()
     cleanup_partially_downloaded_files(Path(outdir))
     assert not partial_file.exists()
+
+
+@pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")
+def test_image_download_legacy_diagnosis_unsupported(cli_run, outdir):
+    result = cli_run(["image", "download", outdir, "--search", "diagnosis:melanoma"])
+    assert result.exit_code == 2
+    assert "no longer supported" in result.output

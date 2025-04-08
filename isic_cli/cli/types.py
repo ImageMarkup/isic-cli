@@ -9,12 +9,26 @@ from requests.models import HTTPError
 
 from isic_cli.io.http import get_cohort, get_collection
 
+unsupported_diagnosis_message = (
+    "\n\nThe 'diagnosis' search filter is no longer supported.\n"
+    "ISIC now uses a hierarchical taxonomy with diagnosis_1-5 fields.\n"
+    "\n"
+    "Example conversion:\n"
+    "  Old: 'diagnosis:melanoma'\n"
+    "  New: 'diagnosis_2:\"Malignant melanocytic proliferations (Melanoma)\"'\n"
+    "\n"
+    "For the complete taxonomy, refer to the ISIC Data Dictionary: https://www.isic-archive.com/data-dictionary"
+)
+
 
 class SearchString(click.ParamType):
     name = "search_string"
 
     def convert(self, value, param, ctx):
         value = super().convert(value, param, ctx)
+
+        if "diagnosis:" in value:
+            self.fail(click.style(unsupported_diagnosis_message, fg="yellow"), param, ctx)
 
         r = ctx.obj.session.get("images/search/", params={"query": value, "limit": 1})
         if r.status_code == 400 and "message" in r.json() and "query" in r.json()["message"]:
