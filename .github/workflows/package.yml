@@ -3,13 +3,65 @@ on:
   release:
     types: [published]
 jobs:
-  package:
+  # Use an older Linux: https://pyinstaller.org/en/stable/usage.html#making-gnu-linux-apps-forward-compatible
+  # Ubuntu 20.04 isn't supported by GitHub Actions.
+  package-linux:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:20.04
+    steps:
+      # include binutils, pyinstaller needs objdump
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y git zip curl binutils
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      # the checkout action has to be after a newer version of git is installed
+      # see https://github.com/actions/checkout/issues/335. we need the git directory
+      # for setuptools-scm to work.
+      - uses: actions/checkout@v3
+
+      # the setup-python action doesn't work due to the older version of glibc
+      # see https://github.com/actions/setup-python/issues/1053
+      - name: Set up Python
+        run: |
+          uv python install 3.10
+          ln -s $(uv python find 3.10) /usr/bin/python
+          ln -s $(dirname $(uv python find 3.10))/pip /usr/bin/pip
+
+      - name: Run packaging step
+        run: |
+          uvx tox -e package
+
+      - name: Install GitHub CLI
+        run: |
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          apt-get update
+          apt-get install -y gh
+
+      # this is needed when building in docker since the repo is cloned as root.
+      # see https://stackoverflow.com/questions/73408170/git-fatal-detected-dubious-ownership
+      - name: Allow git to run against root owned files
+        run: |
+          git config --global --add safe.directory $(pwd)
+
+      - name: Zip and upload binary
+        run: |
+          .github/zip_and_upload_package.sh Linux ${{ github.event.release.tag_name }}
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  package-macos-windows:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os:
-          # Use an older Linux: https://pyinstaller.org/en/stable/usage.html#making-gnu-linux-apps-forward-compatible
-          - ubuntu-20.04
           - macos-latest
           - windows-latest
     steps:
