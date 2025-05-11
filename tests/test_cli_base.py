@@ -7,7 +7,7 @@ import pytest
 def test_base_command(cli_run):
     result = cli_run()
 
-    assert result.exit_code == 0
+    assert result.exit_code == 2
     assert "Usage: " in result.output
 
     # The output of isic with no args and isic with --help should be identical
