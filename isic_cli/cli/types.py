@@ -115,11 +115,9 @@ class WritableFilePath(click.Path):
                 value.parent.mkdir(parents=True, exist_ok=True)
                 with value.open("w", newline="", encoding="utf8"):
                     pass
-            except PermissionError:
-                self.fail(f"Permission denied - cannot write to '{value}'.", param, ctx)
-            except OSError as e:
-                # this is a general catch-all for weirder issues like a read only filesystem,
+            except (PermissionError, OSError):
+                # a user can end up here from lacking permissions, a read only filesystem,
                 # filenames that are too long or have invalid chars, etc.
-                self.fail(f"Cannot write to '{value}'. {e!s}", param, ctx)
+                self.fail(f"Permission denied - cannot write to '{value}'.", param, ctx)
 
         return value

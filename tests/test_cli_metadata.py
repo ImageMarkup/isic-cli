@@ -88,25 +88,20 @@ def test_metadata_download_file(cli_runner):
     assert re.search(r"ISIC_0000000.*Foo.*CC-0.*melanoma.*male", output), output
 
 
-@pytest.mark.skipif(
-    sys.platform in ["win32", "darwin"], reason="Windows and macOS don't support this test"
-)
 @pytest.mark.usefixtures("_mock_image_metadata", "_isolated_filesystem")
-def test_metadata_download_file_no_write(cli_run):
-    result = cli_run(["metadata", "download", "-o", "/metadata.csv"])
+@pytest.mark.parametrize(
+    "output_file", ["/metadata.csv", f"{'1' * 255}.csv"], ids=["no_permissions", "bad_filename"]
+)
+def test_metadata_download_permission_denied(cli_run, output_file):
+    if sys.platform == "win32" and output_file == "/metadata.csv":
+        pytest.skip("Windows doesn't support this test")
+
+    result = cli_run(["metadata", "download", "-o", output_file])
     # it's important that the exit code is 2 and not 1, because the key constraint of this
     # functionality is that the user gets the error message before spending their time
     # downloading the data. exit code 2 is for usage errors with click.
     assert result.exit_code == 2, result.exception
     assert re.search(r"Permission denied", result.output), result.output
-
-
-@pytest.mark.usefixtures("_mock_image_metadata", "_isolated_filesystem")
-def test_metadata_download_file_bad_filename(cli_run):
-    result = cli_run(["metadata", "download", "-o", f"{'1' * 255}.csv"])
-    # see comment in test_metadata_download_file_no_write for why exit code is 2
-    assert result.exit_code == 2, result.exception
-    assert re.search(r"Cannot write to", result.output), result.output
 
 
 @pytest.mark.usefixtures("_mock_image_metadata")
