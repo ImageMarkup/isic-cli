@@ -95,7 +95,7 @@ def test_image_download_no_size_info_with_limit(cli_run, outdir):
     result = cli_run(["image", "download", outdir, "--limit", "1"])
     assert result.exit_code == 0
     assert "2.0 MB" not in result.output
-    assert "1 total" in result.output
+    assert "1 files" in result.output
 
 
 @pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")

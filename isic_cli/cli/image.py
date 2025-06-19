@@ -145,15 +145,11 @@ def download(
 
     with Progress(console=Console(file=sys.stderr)) as progress:
         if limit == 0:
-            task = progress.add_task(
-                f"Downloading images ({nice_num_images} files, {nice_total_size})",
-                total=download_num_images,
-            )
+            message = f"Downloading images + metadata ({nice_num_images} files, {nice_total_size})"
         else:
-            task = progress.add_task(
-                f"Downloading images (and metadata) ({nice_num_images} total)",
-                total=download_num_images,
-            )
+            message = f"Downloading images + metadata ({nice_num_images} files)"
+
+        task = progress.add_task(message, total=download_num_images)
 
         images_iterator = itertools.islice(
             get_images(ctx.session, search, collections), download_num_images
