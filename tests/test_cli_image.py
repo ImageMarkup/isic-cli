@@ -96,3 +96,44 @@ def test_image_download_no_size_info_with_limit(cli_run, outdir):
     assert result.exit_code == 0
     assert "2.0 MB" not in result.output
     assert "1 total" in result.output
+
+
+@pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")
+def test_image_download_sufficient_disk_space(cli_run, outdir, mocker):
+    mocker.patch("isic_cli.cli.image.get_available_disk_space", return_value=10_000_000_000)
+
+    result = cli_run(["image", "download", outdir])
+    assert result.exit_code == 0
+    assert "Warning: Insufficient disk space" not in result.output
+
+
+@pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")
+def test_image_download_insufficient_disk_space_cancel(cli_run, outdir, mocker):
+    mocker.patch("isic_cli.cli.image.get_available_disk_space", return_value=1)
+
+    result = cli_run(["image", "download", outdir], input="n\n")
+    assert result.exit_code == 0
+    assert "Warning: Insufficient disk space" in result.output
+    assert "Required: 2.0 MB" in result.output
+    assert "Available: 1 Byte" in result.output
+    assert "Download cancelled." in result.output
+
+
+@pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")
+def test_image_download_insufficient_disk_space_continue(cli_run, outdir, mocker):
+    mocker.patch("isic_cli.cli.image.get_available_disk_space", return_value=1)
+
+    result = cli_run(["image", "download", outdir], input="y\n")
+    assert result.exit_code == 0
+    assert "Warning: Insufficient disk space" in result.output
+    assert "Successfully downloaded 1 images" in result.output
+
+
+@pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")
+def test_image_download_disk_space_check_unavailable(cli_run, outdir, mocker):
+    mocker.patch("isic_cli.cli.image.get_available_disk_space", return_value=None)
+
+    result = cli_run(["image", "download", outdir])
+    assert result.exit_code == 0
+    assert "Warning: Insufficient disk space" not in result.output
+    assert "Successfully downloaded 1 images" in result.output
