@@ -22,6 +22,7 @@ from isic_cli.cli.types import CommaSeparatedIdentifiers, SearchString
 from isic_cli.cli.utils import _extract_metadata, get_attributions, suggest_guest_login
 from isic_cli.io.http import (
     download_image,
+    get_available_disk_space,
     get_images,
     get_license,
     get_num_images,
@@ -37,6 +38,25 @@ def cleanup_partially_downloaded_files(directory: Path) -> None:
         # missing_ok=True because it's possible that another thread moved the temporary file to
         # its final destination after listing it but before unlinking.
         p.unlink(missing_ok=True)
+
+
+def _check_and_confirm_available_disk_space(outdir: Path, download_size: int) -> None:
+    available_space = get_available_disk_space(outdir)
+
+    if available_space is not None and download_size > available_space:
+        nice_total_size = naturalsize(download_size)
+        available_space_nice = naturalsize(available_space)
+        click.echo()
+        click.secho(
+            "Warning: Insufficient disk space for download.",
+            fg="yellow",
+        )
+        click.echo(f"Required: {nice_total_size}")
+        click.echo(f"Available: {available_space_nice}")
+        click.echo()
+        if not click.confirm("Continue with download anyway?"):
+            click.echo("Download cancelled.")
+            sys.exit(0)
 
 
 @click.group(short_help="Manage images.")
@@ -111,17 +131,20 @@ def download(
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    with Progress(console=Console(file=sys.stderr)) as progress:
-        archive_num_images = get_num_images(ctx.session, search, collections)
-        download_num_images = archive_num_images if limit == 0 else min(archive_num_images, limit)
-        nice_num_images = intcomma(download_num_images)
+    archive_num_images = get_num_images(ctx.session, search, collections)
+    download_num_images = archive_num_images if limit == 0 else min(archive_num_images, limit)
+    nice_num_images = intcomma(download_num_images)
 
-        # only show size information when downloading all images (no limit) because when
-        # a limit is applied we can't accurately predict which specific images will be
-        # downloaded.
+    # only show size information when downloading all images (no limit) because when
+    # a limit is applied we can't accurately predict which specific images will be
+    # downloaded.
+    if limit == 0:
+        archive_total_size = get_size_images(ctx.session, search, collections)
+        nice_total_size = naturalsize(archive_total_size)
+        _check_and_confirm_available_disk_space(outdir, archive_total_size)
+
+    with Progress(console=Console(file=sys.stderr)) as progress:
         if limit == 0:
-            archive_total_size = get_size_images(ctx.session, search, collections)
-            nice_total_size = naturalsize(archive_total_size)
             task = progress.add_task(
                 f"Downloading images ({nice_num_images} files, {nice_total_size})",
                 total=download_num_images,

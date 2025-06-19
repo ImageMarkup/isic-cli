@@ -124,6 +124,21 @@ def get_size_images(session: IsicCliSession, search: str = "", collections: str 
     return r.json()["size"]
 
 
+def get_available_disk_space(path: Path) -> int | None:
+    """
+    Get available disk space in bytes for the given path.
+
+    Returns None if unable to determine disk space (path doesn't exist or permission denied).
+    """
+    try:
+        usage = shutil.disk_usage(path)
+    except OSError:
+        return None
+    else:
+        logger.debug("Available disk space: %s bytes", usage.free)
+        return usage.free
+
+
 def get_license(session: IsicCliSession, license_type: str) -> str:
     r = session.get(f"zip-download/license-file/{license_type}/")
     r.raise_for_status()
