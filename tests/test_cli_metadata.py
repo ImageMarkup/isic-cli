@@ -88,7 +88,9 @@ def test_metadata_download_file(cli_runner):
     assert re.search(r"ISIC_0000000.*Foo.*CC-0.*melanoma.*male", output), output
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="Windows does not support this test")
+@pytest.mark.skipif(
+    sys.platform in ["win32", "darwin"], reason="Windows and macOS don't support this test"
+)
 @pytest.mark.usefixtures("_mock_image_metadata", "_isolated_filesystem")
 def test_metadata_download_file_no_write(cli_run):
     result = cli_run(["metadata", "download", "-o", "/metadata.csv"])
