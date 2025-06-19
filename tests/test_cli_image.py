@@ -20,6 +20,7 @@ def _mock_images(mocker, _isolated_filesystem, outdir):
             f.write(b"12345")
 
     mocker.patch("isic_cli.cli.image.get_num_images", return_value=1)
+    mocker.patch("isic_cli.cli.image.get_size_images", return_value=2e6)
     mocker.patch(
         "isic_cli.cli.image.get_images",
         return_value=iter(
@@ -80,3 +81,18 @@ def test_image_download_legacy_diagnosis_unsupported(cli_run, outdir):
     result = cli_run(["image", "download", outdir, "--search", "diagnosis:melanoma"])
     assert result.exit_code == 2
     assert "no longer supported" in result.output
+
+
+@pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")
+def test_image_download_shows_size_info(cli_run, outdir):
+    result = cli_run(["image", "download", outdir])
+    assert result.exit_code == 0
+    assert "1 files, 2.0 MB" in result.output
+
+
+@pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")
+def test_image_download_no_size_info_with_limit(cli_run, outdir):
+    result = cli_run(["image", "download", outdir, "--limit", "1"])
+    assert result.exit_code == 0
+    assert "2.0 MB" not in result.output
+    assert "1 total" in result.output

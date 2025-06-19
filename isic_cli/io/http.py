@@ -113,6 +113,17 @@ def get_num_images(session: IsicCliSession, search: str = "", collections: str =
     return r.json()["count"]
 
 
+def get_size_images(session: IsicCliSession, search: str = "", collections: str = "") -> int:
+    """Get the total size in bytes of all images matching the search criteria."""
+    params = {
+        "query": search,
+        "collections": collections,
+    }
+    r = session.get("images/search/size/", params=params)
+    r.raise_for_status()
+    return r.json()["size"]
+
+
 def get_license(session: IsicCliSession, license_type: str) -> str:
     r = session.get(f"zip-download/license-file/{license_type}/")
     r.raise_for_status()

@@ -13,14 +13,20 @@ from typing import TYPE_CHECKING
 
 import click
 from click.types import IntRange
-from humanize import intcomma
+from humanize import intcomma, naturalsize
 from more_itertools.more import chunked
 from rich.console import Console
 from rich.progress import Progress
 
 from isic_cli.cli.types import CommaSeparatedIdentifiers, SearchString
 from isic_cli.cli.utils import _extract_metadata, get_attributions, suggest_guest_login
-from isic_cli.io.http import download_image, get_images, get_license, get_num_images
+from isic_cli.io.http import (
+    download_image,
+    get_images,
+    get_license,
+    get_num_images,
+    get_size_images,
+)
 
 if TYPE_CHECKING:
     from isic_cli.cli.context import IsicContext
@@ -109,10 +115,22 @@ def download(
         archive_num_images = get_num_images(ctx.session, search, collections)
         download_num_images = archive_num_images if limit == 0 else min(archive_num_images, limit)
         nice_num_images = intcomma(download_num_images)
-        task = progress.add_task(
-            f"Downloading images (and metadata) ({nice_num_images} total)",
-            total=download_num_images,
-        )
+
+        # only show size information when downloading all images (no limit) because when
+        # a limit is applied we can't accurately predict which specific images will be
+        # downloaded.
+        if limit == 0:
+            archive_total_size = get_size_images(ctx.session, search, collections)
+            nice_total_size = naturalsize(archive_total_size)
+            task = progress.add_task(
+                f"Downloading images ({nice_num_images} files, {nice_total_size})",
+                total=download_num_images,
+            )
+        else:
+            task = progress.add_task(
+                f"Downloading images (and metadata) ({nice_num_images} total)",
+                total=download_num_images,
+            )
 
         images_iterator = itertools.islice(
             get_images(ctx.session, search, collections), download_num_images
