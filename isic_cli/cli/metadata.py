@@ -18,7 +18,11 @@ from rich.console import Console
 from rich.progress import Progress, track
 from rich.table import Table
 
-from isic_cli.cli.types import CommaSeparatedIdentifiers, SearchString, WritableFilePath
+from isic_cli.cli.types import (
+    CommaSeparatedCollectionIds,
+    SearchString,
+    WritableFilePath,
+)
 from isic_cli.cli.utils import _extract_metadata, suggest_guest_login
 from isic_cli.io.http import get_images, get_num_images
 
@@ -146,7 +150,7 @@ def validate(csv_file: io.TextIOWrapper):  # noqa: C901, PLR0915, PLR0912
 @click.option(
     "-c",
     "--collections",
-    type=CommaSeparatedIdentifiers(),
+    type=CommaSeparatedCollectionIds(),
     default="",
     help=(
         "Filter the images based on a comma separated list of collection ids e.g. 2,17,42. "
