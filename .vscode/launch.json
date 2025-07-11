@@ -1,0 +1,23 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "isic-cli",
+            "type": "debugpy",
+            "request": "launch",
+            // VSCode doesn't directly support console_scripts, see
+            // https://stackoverflow.com/questions/61693769/vs-code-run-debug-configuration-for-a-console-script-in-module-mode
+            // https://github.com/microsoft/vscode-python/issues/8372#issuecomment-717911693
+            "program": "${workspaceFolder}/isic_cli/cli/__main__.py",
+            "args": [
+                "--dev",
+                "image",
+                "download",
+                "--limit",
+                "10",
+                "${workspaceFolder}/tempdir",
+            ],
+            "console": "integratedTerminal"
+        }
+    ]
+}
