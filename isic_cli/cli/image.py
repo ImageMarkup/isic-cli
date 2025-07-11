@@ -18,7 +18,7 @@ from more_itertools.more import chunked
 from rich.console import Console
 from rich.progress import Progress
 
-from isic_cli.cli.types import CommaSeparatedIdentifiers, SearchString
+from isic_cli.cli.types import CommaSeparatedCollectionIds, SearchString
 from isic_cli.cli.utils import _extract_metadata, get_attributions, suggest_guest_login
 from isic_cli.io.http import (
     download_image,
@@ -78,7 +78,7 @@ def image(ctx):
 @click.option(
     "-c",
     "--collections",
-    type=CommaSeparatedIdentifiers(),
+    type=CommaSeparatedCollectionIds(),
     default="",
     help=(
         "Filter the images based on a comma separated string of collection"

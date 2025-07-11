@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 import pytest
+from requests import HTTPError
 
 from isic_cli.cli.image import cleanup_partially_downloaded_files
 
@@ -49,6 +50,19 @@ def test_image_download(cli_run, outdir):
     assert Path(f"{outdir}/metadata.csv").exists()
     assert Path(f"{outdir}/attribution.txt").exists()
     assert Path(f"{outdir}/licenses/CC-0.txt").exists()
+
+
+@pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")
+def test_image_download_no_collection(mocker, cli_run, outdir):
+    mocker.patch(
+        "isic_cli.cli.types.get_collection",
+        side_effect=HTTPError(response=mocker.MagicMock(status_code=404)),
+    )
+
+    result = cli_run(["image", "download", outdir, "--collections", "462"])
+
+    assert result.exit_code == 2, result.exception
+    assert "does not exist or you don't have access to it." in result.output
 
 
 @pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")

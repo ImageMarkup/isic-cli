@@ -36,14 +36,34 @@ class SearchString(click.ParamType):
         return value
 
 
-class CommaSeparatedIdentifiers(click.ParamType):
-    name = "comma_separated_identifiers"
+class CommaSeparatedCollectionIds(click.ParamType):
+    name = "comma_separated_collection_ids"
 
     def convert(self, value, param, ctx):
         value = super().convert(value, param, ctx)
 
         if value != "" and not re.match(r"^(\d+)(,\d+)*$", value):
             self.fail(f'Improperly formatted value "{value}".', param, ctx)
+
+        collection_ids = value.split(",") if value else []
+
+        for collection_id in collection_ids:
+            try:
+                get_collection(ctx.obj.session, collection_id)
+            except HTTPError as e:  # noqa: PERF203
+                if e.response.status_code == 404:
+                    append = ""
+                    if not ctx.obj.user:
+                        append = "Logging in may help (see `isic user login`)."
+
+                    self.fail(
+                        f"Collection {collection_id} does not exist or you don't have access to it. {append}",  # noqa: E501
+                        param,
+                        ctx,
+                    )
+                else:
+                    raise
+
         return value
 
 
