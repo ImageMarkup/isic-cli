@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 
@@ -88,6 +89,33 @@ def test_image_download_cleanup(cli_run, outdir):
     assert partial_file.exists()
     cleanup_partially_downloaded_files(Path(outdir))
     assert not partial_file.exists()
+
+
+@pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")
+def test_image_download_cleanup_permission_error(cli_run, outdir, mocker, caplog):
+    partial_file = Path(outdir) / f".isic-partial.{os.getpid()}.ISIC_0000000.jpg"
+    partial_file.parent.mkdir(parents=True)
+    partial_file.touch()
+
+    original_unlink = Path.unlink
+
+    def mock_unlink(self, *, missing_ok=False):
+        if str(partial_file) == str(self):
+            raise PermissionError("Access is denied")
+        return original_unlink(self, missing_ok=missing_ok)
+
+    mocker.patch.object(Path, "unlink", mock_unlink)
+    caplog.set_level(logging.WARNING)
+
+    result = cli_run(["image", "download", outdir])
+    assert result.exit_code == 0
+
+    # run manually since atexit won't run in the test environment
+    cleanup_partially_downloaded_files(Path(outdir))
+
+    assert (
+        "Permission error while cleaning up one or more partially downloaded files" in caplog.text
+    )
 
 
 @pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")

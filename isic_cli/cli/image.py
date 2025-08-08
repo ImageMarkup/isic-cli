@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 import csv
 import functools
 import itertools
+import logging
 import os
 from pathlib import Path
 import signal
@@ -33,11 +34,29 @@ if TYPE_CHECKING:
     from isic_cli.cli.context import IsicContext
 
 
+logger = logging.getLogger(__name__)
+
+
 def cleanup_partially_downloaded_files(directory: Path) -> None:
+    permission_errors = False
     for p in directory.glob(f"**/.isic-partial.{os.getpid()}.*"):
         # missing_ok=True because it's possible that another thread moved the temporary file to
         # its final destination after listing it but before unlinking.
-        p.unlink(missing_ok=True)
+        try:
+            p.unlink(missing_ok=True)
+        except PermissionError:  # noqa: PERF203
+            # frequently on windows this is raised. it appears like this could be caused by
+            # antivirus or various indexers that attempt to use the file shortly after it's
+            # created.
+            permission_errors = True
+
+    if permission_errors:
+        logger.warning(
+            click.style(
+                "Permission error while cleaning up one or more partially downloaded files",
+                fg="yellow",
+            )
+        )
 
 
 def _check_and_confirm_available_disk_space(outdir: Path, download_size: int) -> None:
