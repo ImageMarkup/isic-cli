@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import sys
 from typing import TYPE_CHECKING
 
+from authlib.integrations.base_client.errors import OAuthError
 import click
 
 if TYPE_CHECKING:
@@ -22,8 +24,18 @@ def login(obj: IsicContext):
     if obj.user:
         click.echo(f'Hello {obj.user["email"]}!')
     else:
-        obj.oauth.login()
-        click.echo("Success!")
+        try:
+            obj.oauth.login()
+        except OAuthError as e:
+            if e.error == "invalid_grant":
+                click.secho(
+                    "Logging in timed out or had an unexpected error. Please try again.", fg="red"
+                )
+                sys.exit(1)
+            else:
+                raise
+        else:
+            click.secho("Success!", fg="green")
 
 
 @user.command()
