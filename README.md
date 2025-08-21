@@ -2,6 +2,8 @@
 
 The official command line tool for interacting with the [ISIC Archive](https://isic-archive.com).
 
+> **Note:** Looking to download the entire Archive? A [prebuilt snapshot](https://isic-archive.s3.us-east-1.amazonaws.com/snapshots/ISIC_images.zip) (60GB) is available through the [AWS Open Data Program](https://registry.opendata.aws/isic-archive/) for easier bulk access.
+
 ## Installation
 - Download the [latest isic-cli release](https://github.com/ImageMarkup/isic-cli/releases/latest).
 - Extract the executable to a location where it can be invoked from the command line.
