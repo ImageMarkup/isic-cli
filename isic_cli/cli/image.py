@@ -138,6 +138,19 @@ def download(
 
     anatom_site_general:*torso AND image_type:dermoscopic
     """
+    if not search and not collections and limit == 0:
+        click.echo()
+        click.secho(
+            "Note: You're downloading the entire ISIC Archive without filters.",
+            fg="yellow",
+            bold=True,
+        )
+        click.echo(
+            "A prebuilt snapshot of all public data is available for faster bulk access at:\n"
+            "https://isic-archive.s3.us-east-1.amazonaws.com/snapshots/ISIC_images.zip"
+        )
+        click.echo()
+
     outdir.mkdir(parents=True, exist_ok=True)
 
     def signal_handler(signum, frame):
