@@ -1,0 +1,100 @@
+name: Debug PowerShell Quoting
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  debug-quoting:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e .
+        shell: pwsh
+
+      - name: Test CLI accessibility
+        shell: pwsh
+        run: |
+          Write-Host "Testing basic CLI functionality..."
+          isic --help
+
+      - name: Test simple metadata query (no spaces)
+        shell: pwsh
+        run: |
+          Write-Host "Testing simple query without spaces..."
+          isic metadata download -s "age_approx:50" --limit 1
+
+      - name: Debug: Show what PowerShell passes for different quotes
+        shell: pwsh
+        run: |
+          Write-Host "=== PowerShell Quoting Debug ==="
+
+          # Test 1: Single quotes around the whole thing
+          $query1 = 'diagnosis_3:"Squamous cell carcinoma in situ"'
+          Write-Host "Query 1 (single quotes): '$query1'"
+          Write-Host "Length: $($query1.Length)"
+          Write-Host "Characters: $($query1.ToCharArray() -join ', ')"
+
+          # Test 2: Double quotes with escaped inner quotes
+          $query2 = "diagnosis_3:`"Squamous cell carcinoma in situ`""
+          Write-Host "Query 2 (backtick escape): `"$query2`""
+          Write-Host "Length: $($query2.Length)"
+          Write-Host "Characters: $($query2.ToCharArray() -join ', ')"
+
+          # Test 3: Double quotes inside single quotes
+          $query3 = 'diagnosis_3:""Squamous cell carcinoma in situ""'
+          Write-Host "Query 3 (doubled quotes): '$query3'"
+          Write-Host "Length: $($query3.Length)"
+          Write-Host "Characters: $($query3.ToCharArray() -join ', ')"
+
+      - name: Test each quoting style with verbose output
+        shell: pwsh
+        run: |
+          Write-Host "=== Testing actual commands ==="
+
+          Write-Host "`n1. Testing single quotes (Unix style):"
+          try {
+            isic metadata download -s 'diagnosis_3:"Squamous cell carcinoma in situ"' --limit 1 2>&1 | Tee-Object -Variable output1
+            Write-Host "EXIT CODE: $LASTEXITCODE"
+          } catch {
+            Write-Host "EXCEPTION: $($_.Exception.Message)"
+          }
+
+          Write-Host "`n2. Testing backtick escaping:"
+          try {
+            isic metadata download -s "diagnosis_3:`"Squamous cell carcinoma in situ`"" --limit 1 2>&1 | Tee-Object -Variable output2
+            Write-Host "EXIT CODE: $LASTEXITCODE"
+          } catch {
+            Write-Host "EXCEPTION: $($_.Exception.Message)"
+          }
+
+          Write-Host "`n3. Testing doubled quotes:"
+          try {
+            isic metadata download -s 'diagnosis_3:""Squamous cell carcinoma in situ""' --limit 1 2>&1 | Tee-Object -Variable output3
+            Write-Host "EXIT CODE: $LASTEXITCODE"
+          } catch {
+            Write-Host "EXCEPTION: $($_.Exception.Message)"
+          }
+
+      - name: Test with a known good diagnosis value
+        shell: pwsh
+        run: |
+          Write-Host "=== Testing with a simpler diagnosis value ==="
+
+          # Try with a value that might not have special characters
+          Write-Host "Testing with 'melanoma':"
+          try {
+            isic metadata download -s 'diagnosis_3:"melanoma"' --limit 1 2>&1
+            Write-Host "EXIT CODE: $LASTEXITCODE"
+          } catch {
+            Write-Host "EXCEPTION: $($_.Exception.Message)"
+          }

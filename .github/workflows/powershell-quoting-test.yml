@@ -1,0 +1,132 @@
+name: PowerShell Quoting Test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  test-powershell-quoting:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e .
+        shell: pwsh
+
+      - name: Test Unix-style quoting (should fail in PowerShell)
+        id: unix-style
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          Write-Host "Testing Unix-style quoting: 'diagnosis_3:`"Squamous cell carcinoma in situ`"'"
+          $query = 'diagnosis_3:"Squamous cell carcinoma in situ"'
+          Write-Host "PowerShell will pass: $query"
+          isic metadata download -s 'diagnosis_3:"Squamous cell carcinoma in situ"' --limit 1
+
+      - name: Test incorrect PowerShell quoting (should also fail)
+        id: incorrect-powershell
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          # This is what users might try but still fails
+          isic metadata download -s "diagnosis_3:\"Squamous cell carcinoma in situ\"" --limit 1
+
+      - name: Test correct PowerShell quoting with doubled quotes
+        id: correct-powershell-doubled
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          # This should work - doubled quotes inside single quotes
+          isic metadata download -s 'diagnosis_3:""Squamous cell carcinoma in situ""' --limit 1
+
+      - name: Test correct PowerShell quoting with backticks
+        id: correct-powershell-backticks
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          # This should work - backtick escaping
+          isic metadata download -s "diagnosis_3:`"Squamous cell carcinoma in situ`"" --limit 1
+
+      - name: Test simple query without spaces (should always work)
+        id: simple-query
+        shell: pwsh
+        run: |
+          # This should always work regardless of shell
+          isic metadata download -s 'age_approx:50' --limit 1
+
+      - name: Analyze test results
+        shell: pwsh
+        run: |
+          Write-Host "=== Test Results Analysis ==="
+          Write-Host "Unix-style quoting outcome: ${{ steps.unix-style.outcome }}"
+          Write-Host "Incorrect PowerShell quoting outcome: ${{ steps.incorrect-powershell.outcome }}"
+          Write-Host "Correct PowerShell doubled quotes outcome: ${{ steps.correct-powershell-doubled.outcome }}"
+          Write-Host "Correct PowerShell backticks outcome: ${{ steps.correct-powershell-backticks.outcome }}"
+          Write-Host "Simple query outcome: ${{ steps.simple-query.outcome }}"
+
+          Write-Host ""
+          Write-Host "=== Analysis ==="
+
+          # Count successes and failures
+          $successes = @("${{ steps.unix-style.outcome }}", "${{ steps.incorrect-powershell.outcome }}", "${{ steps.correct-powershell-doubled.outcome }}", "${{ steps.correct-powershell-backticks.outcome }}", "${{ steps.simple-query.outcome }}") | Where-Object { $_ -eq "success" }
+          $failures = @("${{ steps.unix-style.outcome }}", "${{ steps.incorrect-powershell.outcome }}", "${{ steps.correct-powershell-doubled.outcome }}", "${{ steps.correct-powershell-backticks.outcome }}", "${{ steps.simple-query.outcome }}") | Where-Object { $_ -eq "failure" }
+
+          Write-Host "Total successes: $($successes.Count)"
+          Write-Host "Total failures: $($failures.Count)"
+
+          if ($successes.Count -eq 5) {
+            Write-Host "🔍 All commands succeeded - this suggests either:"
+            Write-Host "   1. PowerShell is handling all quoting styles correctly, OR"
+            Write-Host "   2. The search validation is not strict enough to catch quoting issues"
+            Write-Host "✅ This is actually good news - the quoting issue may not exist or be as severe as expected"
+          } elseif ($failures.Count -eq 5) {
+            Write-Host "❌ All commands failed - this suggests:"
+            Write-Host "   1. Network/authentication issues, OR"
+            Write-Host "   2. Invalid diagnosis value, OR"
+            Write-Host "   3. CLI installation problems"
+          } else {
+            Write-Host "📊 Mixed results - this is the expected behavior if there's a real quoting issue"
+            Write-Host "   - Some quoting styles work, others don't"
+          }
+
+          Write-Host ""
+          Write-Host "This test run provides valuable data about PowerShell quoting behavior."
+          Write-Host "All outcomes are informative and help us understand the real issue."
+
+  test-cmd-quoting:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e .
+        shell: cmd
+
+      - name: Test quoting in Command Prompt
+        shell: cmd
+        run: |
+          REM Test basic quoting in cmd.exe
+          isic metadata download -s "diagnosis_3:\"Squamous cell carcinoma in situ\"" --limit 1
+
+      - name: Test simple query in Command Prompt
+        shell: cmd
+        run: |
+          isic metadata download -s "age_approx:50" --limit 1
