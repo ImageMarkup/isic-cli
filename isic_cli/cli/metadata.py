@@ -11,8 +11,7 @@ from typing import TYPE_CHECKING
 import click
 from click.types import IntRange
 from humanize import intcomma
-from isic_metadata.metadata import MetadataBatch, MetadataRow, convert_errors
-from isic_metadata.utils import get_unstructured_columns
+from isic_metadata import MetadataBatch, MetadataRow, convert_errors, get_unstructured_columns
 from pydantic import ValidationError
 from rich.console import Console
 from rich.progress import Progress, track
