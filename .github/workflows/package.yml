@@ -29,9 +29,16 @@ jobs:
       # see https://github.com/actions/setup-python/issues/1053
       - name: Set up Python
         run: |
-          uv python install 3.10
-          ln -s $(uv python find 3.10) /usr/bin/python
-          ln -s $(dirname $(uv python find 3.10))/pip /usr/bin/pip
+          uv python install 3.12
+          ln -s $(uv python find 3.12) /usr/bin/python
+          ln -s $(dirname $(uv python find 3.12))/pip /usr/bin/pip
+
+      # this is needed when building in docker since the repo is cloned as root.
+      # must run before the packaging step, which uses git to find tracked files.
+      # see https://stackoverflow.com/questions/73408170/git-fatal-detected-dubious-ownership
+      - name: Allow git to run against root owned files
+        run: |
+          git config --global --add safe.directory $(pwd)
 
       - name: Run packaging step
         run: |
@@ -43,12 +50,6 @@ jobs:
           echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
           apt-get update
           apt-get install -y gh
-
-      # this is needed when building in docker since the repo is cloned as root.
-      # see https://stackoverflow.com/questions/73408170/git-fatal-detected-dubious-ownership
-      - name: Allow git to run against root owned files
-        run: |
-          git config --global --add safe.directory $(pwd)
 
       - name: Zip and upload binary
         run: |
@@ -69,7 +70,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.12"
       - name: Install tox
         run: |
           pip install --upgrade pip
