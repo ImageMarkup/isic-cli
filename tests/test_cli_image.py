@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
+import sys
 
 import pytest
 from requests import HTTPError
@@ -123,6 +124,23 @@ def test_image_download_legacy_diagnosis_unsupported(cli_run, outdir):
     result = cli_run(["image", "download", outdir, "--search", "diagnosis:melanoma"])
     assert result.exit_code == 2
     assert "no longer supported" in result.output
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="chmod doesn't restrict directory writes")
+@pytest.mark.usefixtures("_isolated_filesystem")
+def test_image_download_unwritable_outdir(cli_run):
+    readonly = Path("readonly")
+    readonly.mkdir()
+    readonly.chmod(0o555)
+    try:
+        result = cli_run(["image", "download", str(readonly / "child")])
+    finally:
+        readonly.chmod(0o755)
+
+    assert result.exit_code == 2
+    assert "Permission denied" in result.output
+    # probe must be side-effect-free: a failed validation leaves no stray dir
+    assert not (readonly / "child").exists()
 
 
 @pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")

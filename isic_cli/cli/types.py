@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import re
 import sys
 
@@ -135,17 +136,77 @@ class WritableFilePath(click.Path):
     def convert(self, value, param, ctx):
         value = super().convert(value, param, ctx)
 
-        # writeable checks on click.Path only apply to already existing paths, see
-        # https://github.com/pallets/click/issues/2495.
-        # check if the final path is writable before going to the effort of downloading the data.
+        # click.Path(writable=True) only validates existing paths, so it can't catch
+        # the case where the file must be created. See
+        # https://github.com/pallets/click/issues/2495. Attempt to open the file so we
+        # exercise the real OS check, then remove it so this stays a pure probe —
+        # a subsequent argument failing to parse must not leave a stray file behind.
+        # The callback recreates it for real.
+        #
+        # Actually performing the operation is more reliable than heuristics like
+        # os.access, which only checks POSIX mode bits and misses ACLs, read-only
+        # mounts, immutable flags, etc. — it can say "writable" for a path the
+        # kernel will still reject. If we want to know whether the write will work,
+        # the most truthful test is to try it.
         if value is not None and str(value) != "-":
             try:
+                # .exists() can itself raise (e.g. a filename that's too long), so
+                # it has to live inside the try alongside the write probe.
+                existed_before = value.exists()
                 value.parent.mkdir(parents=True, exist_ok=True)
                 with value.open("w", newline="", encoding="utf8"):
                     pass
-            except (PermissionError, OSError):
-                # a user can end up here from lacking permissions, a read only filesystem,
-                # filenames that are too long or have invalid chars, etc.
-                self.fail(f"Permission denied - cannot write to '{value}'.", param, ctx)
+            except OSError as e:
+                msg = f"Permission denied - cannot write to '{value}': {e.strerror}."
+                self.fail(msg, param, ctx)
+
+            # remove what we created — a later argument could still fail to parse
+            if not existed_before:
+                with contextlib.suppress(OSError):
+                    value.unlink()
+
+        return value
+
+
+class WritableDirectoryPath(click.Path):
+    name = "writable_directory_path"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.file_okay:
+            raise ValueError("file_okay must be False")
+        elif not self.dir_okay:
+            raise ValueError("dir_okay must be True")
+
+    def convert(self, value, param, ctx):
+        value = super().convert(value, param, ctx)
+
+        # click.Path(writable=True) only validates existing paths, so it can't catch
+        # the case where the directory must be created. See
+        # https://github.com/pallets/click/issues/2495. Attempt the mkdir so we
+        # exercise the real OS check, then remove it so this stays a pure probe —
+        # a subsequent argument failing to parse must not leave a stray directory
+        # behind. The callback recreates it for real.
+        #
+        # Actually performing the operation is more reliable than heuristics like
+        # os.access, which only checks POSIX mode bits and misses ACLs, read-only
+        # mounts, immutable flags, etc. — it can say "writable" for a path the
+        # kernel will still reject. If we want to know whether mkdir will work,
+        # the most truthful test is to try it.
+        if value is not None:
+            try:
+                # .exists() can itself raise (e.g. a filename that's too long), so
+                # it has to live inside the try alongside the write probe.
+                existed_before = value.exists()
+                value.mkdir(parents=True, exist_ok=True)
+            except OSError as e:
+                msg = f"Permission denied - cannot write to '{value}': {e.strerror}."
+                self.fail(msg, param, ctx)
+
+            # remove what we created — a later argument could still fail to parse
+            if not existed_before:
+                with contextlib.suppress(OSError):
+                    value.rmdir()
 
         return value
