@@ -214,9 +214,7 @@ def main():
 
         click.echo(f'isic-cli: v{get_version() or "-"}', err=True)
         click.echo(f"python:   v{platform.python_version()}", err=True)
-        click.echo(
-            f"time:     {datetime.datetime.now(tz=datetime.timezone.utc).isoformat()}", err=True
-        )
+        click.echo(f"time:     {datetime.datetime.now(tz=datetime.UTC).isoformat()}", err=True)
         click.echo(f"os:       {platform.platform()}", err=True)
         click.echo(f"env:      {env}", err=True)
         click.echo(f"user:     {user}", err=True)

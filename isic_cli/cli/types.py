@@ -50,7 +50,7 @@ class CommaSeparatedCollectionIds(click.ParamType):
         for collection_id in collection_ids:
             try:
                 get_collection(ctx.obj.session, collection_id)
-            except HTTPError as e:  # noqa: PERF203
+            except HTTPError as e:
                 if e.response.status_code == 404:
                     append = ""
                     if not ctx.obj.user:
@@ -82,13 +82,19 @@ class CollectionId(IntParamType):
         except HTTPError as e:
             if e.response.status_code == 404:
                 self.fail(
-                    f"Collection {value} does not exist or you don't have access to it.", param, ctx
+                    f"Collection {value} does not exist or you don't have access to it.",
+                    param,
+                    ctx,
                 )
             else:
                 raise
 
         if collection["locked"] and not self.locked_okay:
-            click.secho(f'"{collection["name"]}" is locked for modifications.', err=True, fg="red")
+            click.secho(
+                f'"{collection["name"]}" is locked for modifications.',
+                err=True,
+                fg="red",
+            )
             sys.exit(1)
 
         return value
@@ -105,7 +111,9 @@ class CohortId(IntParamType):
         except HTTPError as e:
             if e.response.status_code == 404:
                 self.fail(
-                    f"Cohort {value} does not exist or you don't have access to it.", param, ctx
+                    f"Cohort {value} does not exist or you don't have access to it.",
+                    param,
+                    ctx,
                 )
             else:
                 raise

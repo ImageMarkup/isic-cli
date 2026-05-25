@@ -44,7 +44,7 @@ def cleanup_partially_downloaded_files(directory: Path) -> None:
         # its final destination after listing it but before unlinking.
         try:
             p.unlink(missing_ok=True)
-        except PermissionError:  # noqa: PERF203
+        except PermissionError:
             # frequently on windows this is raised. it appears like this could be caused by
             # antivirus or various indexers that attempt to use the file shortly after it's
             # created.
