@@ -104,6 +104,22 @@ def test_metadata_download_permission_denied(cli_run, output_file):
     assert re.search(r"Permission denied", result.output), result.output
 
 
+@pytest.mark.usefixtures("_mock_image_metadata", "_isolated_filesystem")
+def test_metadata_download_unwritable_output(cli_run):
+    readonly = Path("readonly")
+    readonly.mkdir()
+    readonly.chmod(0o555)
+    try:
+        result = cli_run(["metadata", "download", "-o", str(readonly / "child.csv")])
+    finally:
+        readonly.chmod(0o755)
+
+    assert result.exit_code == 2
+    assert re.search(r"Permission denied", result.output), result.output
+    # probe must be side-effect-free: a failed validation leaves no stray file
+    assert not (readonly / "child.csv").exists()
+
+
 @pytest.mark.usefixtures("_mock_image_metadata")
 @pytest.mark.parametrize(
     "cli_runner",

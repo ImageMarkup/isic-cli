@@ -19,7 +19,7 @@ from more_itertools.more import chunked
 from rich.console import Console
 from rich.progress import Progress
 
-from isic_cli.cli.types import CommaSeparatedCollectionIds, SearchString
+from isic_cli.cli.types import CommaSeparatedCollectionIds, SearchString, WritableDirectoryPath
 from isic_cli.cli.utils import _extract_metadata, get_attributions, suggest_guest_login
 from isic_cli.io.http import (
     download_image,
@@ -114,7 +114,7 @@ def image(ctx):
 )
 @click.argument(
     "outdir",
-    type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
+    type=WritableDirectoryPath(file_okay=False, dir_okay=True, path_type=Path),
 )
 @click.pass_obj
 @suggest_guest_login
