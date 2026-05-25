@@ -104,6 +104,7 @@ def test_metadata_download_permission_denied(cli_run, output_file):
     assert re.search(r"Permission denied", result.output), result.output
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="chmod doesn't restrict directory writes")
 @pytest.mark.usefixtures("_mock_image_metadata", "_isolated_filesystem")
 def test_metadata_download_unwritable_output(cli_run):
     readonly = Path("readonly")

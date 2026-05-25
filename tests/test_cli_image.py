@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
+import sys
 
 import pytest
 from requests import HTTPError
@@ -125,6 +126,7 @@ def test_image_download_legacy_diagnosis_unsupported(cli_run, outdir):
     assert "no longer supported" in result.output
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="chmod doesn't restrict directory writes")
 @pytest.mark.usefixtures("_isolated_filesystem")
 def test_image_download_unwritable_outdir(cli_run):
     readonly = Path("readonly")
