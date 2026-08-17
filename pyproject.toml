@@ -40,7 +40,7 @@ ignore = [
   "TRY003", # Avoid specifying long messages outside the exception class
 
   # Excessive
-  "RET503", # implict return
+  "RET503", # implicit return
   "RET506", # elif after raise
   "PLR2004", # magic value used in comparison
 ]
@@ -63,3 +63,10 @@ required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"
+
+[tool.codespell]
+# Ref: https://github.com/codespell-project/codespell#using-a-config-file
+skip = '.git,.gitignore,.gitattributes'
+check-hidden = true
+# ignore-regex = ''
+# ignore-words-list = ''
