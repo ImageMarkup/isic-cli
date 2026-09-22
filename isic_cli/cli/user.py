@@ -5,6 +5,7 @@ import sys
 from typing import TYPE_CHECKING
 
 from authlib.integrations.base_client.errors import OAuthError
+from authlib.oauth2.rfc6749.errors import MissingCodeException
 import click
 
 if TYPE_CHECKING:
@@ -26,6 +27,9 @@ def login(obj: IsicContext):
     else:
         try:
             obj.oauth.login()
+        except MissingCodeException:
+            click.secho("No code was entered. Please try again.", fg="red")
+            sys.exit(1)
         except OAuthError as e:
             if e.error == "invalid_grant":
                 click.secho(
