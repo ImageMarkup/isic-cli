@@ -61,6 +61,16 @@ def test_metadata_validate_lesions_patients(runner, cli_run):
     assert re.search(r"belong to multiple patients", result.output), result.output
 
 
+def test_metadata_validate_non_utf8(runner, cli_run):
+    with runner.isolated_filesystem():
+        Path("foo.csv").write_text("diagnosis,sex\nfoo,bar", encoding="utf-16")
+
+        result = cli_run(["metadata", "validate", "foo.csv"])
+
+    assert result.exit_code == 1, result.exception
+    assert re.search(r"foo.csv is not UTF-8 encoded", result.output), result.output
+
+
 @pytest.mark.usefixtures("_mock_image_metadata")
 @pytest.mark.parametrize(
     "cli_runner",

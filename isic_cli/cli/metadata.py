@@ -47,7 +47,13 @@ def validate(csv_file: io.TextIOWrapper):  # noqa: C901, PLR0915, PLR0912
     console = Console()
 
     # get number of rows in csv
-    num_rows = sum(1 for _ in csv_file)
+    try:
+        num_rows = sum(1 for _ in csv_file)
+    except UnicodeDecodeError:
+        click.secho(
+            f"{csv_file.name} is not UTF-8 encoded. Save it as UTF-8 and try again.", fg="red"
+        )
+        sys.exit(1)
     csv_file.seek(0)
 
     reader = csv.DictReader(csv_file)
