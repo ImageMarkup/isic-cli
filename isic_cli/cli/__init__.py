@@ -22,7 +22,6 @@ from sentry_sdk.integrations.dedupe import DedupeIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 from sentry_sdk.integrations.modules import ModulesIntegration
 from sentry_sdk.integrations.stdlib import StdlibIntegration
-from sentry_sdk.integrations.threading import ThreadingIntegration
 
 from isic_cli.cli.accession import accession as accession_group
 from isic_cli.cli.collection import collection as collection_group
@@ -75,7 +74,6 @@ def _sentry_setup():
                 # set event_level to None so log messages will never create sentry issues,
                 # only breadcrumbs.
                 LoggingIntegration(event_level=None),
-                ThreadingIntegration(),
             ],
         )
 
