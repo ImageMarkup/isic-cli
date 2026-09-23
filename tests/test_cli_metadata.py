@@ -38,10 +38,10 @@ def _mock_image_metadata(mocker):
     )
 
 
-def test_metadata_validate(runner, cli_run):
+@pytest.mark.parametrize("encoding", ["utf-8", "utf-8-sig"], ids=["no_bom", "bom"])
+def test_metadata_validate(runner, cli_run, encoding):
     with runner.isolated_filesystem():
-        with Path("foo.csv").open("w") as f:
-            f.write("diagnosis,sex\nfoo,bar")
+        Path("foo.csv").write_text("diagnosis,sex\nfoo,bar", encoding=encoding)
 
         result = cli_run(["metadata", "validate", "foo.csv"])
 
@@ -59,6 +59,16 @@ def test_metadata_validate_lesions_patients(runner, cli_run):
 
     assert result.exit_code == 1, result.exception
     assert re.search(r"belong to multiple patients", result.output), result.output
+
+
+def test_metadata_validate_non_utf8(runner, cli_run):
+    with runner.isolated_filesystem():
+        Path("foo.csv").write_text("diagnosis,sex\nfoo,bar", encoding="utf-16")
+
+        result = cli_run(["metadata", "validate", "foo.csv"])
+
+    assert result.exit_code == 1, result.exception
+    assert re.search(r"foo.csv is not UTF-8 encoded", result.output), result.output
 
 
 @pytest.mark.usefixtures("_mock_image_metadata")
