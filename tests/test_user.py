@@ -22,3 +22,10 @@ def test_user_login_oauth_timeout(cli_run, mocker):
     assert result.exit_code == 1
     assert "Logging in timed out or had an unexpected error" in result.output
     mock_login.assert_called_once()
+
+
+@pytest.mark.usefixtures("_isolated_filesystem")
+def test_user_login_empty_code(cli_run):
+    result = cli_run(["user", "login"], input="\n", env={"DISPLAY": ""})
+    assert result.exit_code == 1
+    assert "No code was entered" in result.output
