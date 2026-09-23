@@ -58,3 +58,23 @@ def test_sentry_error_capture(mocker, send_bug_report, capture_exception_sent):
     spy = mocker.spy(cli, "capture_exception")
     main()
     assert spy.call_count == capture_exception_sent
+
+
+def test_connection_error_is_not_reported_as_bug(mocker, capsys):
+    from requests.exceptions import SSLError
+
+    from isic_cli import cli
+    from isic_cli.cli import main
+
+    mocker.patch("isic_cli.cli.cli", side_effect=SSLError("EOF occurred in violation of protocol"))
+    mocker.patch("isic_cli.cli.is_dev_install", return_value=False)
+    prompt = mocker.patch("isic_cli.cli.click.prompt")
+    spy = mocker.spy(cli, "capture_exception")
+
+    with pytest.raises(SystemExit) as exc_info:
+        main()
+
+    assert exc_info.value.code == 1
+    assert "Unable to connect to the ISIC Archive" in capsys.readouterr().err
+    prompt.assert_not_called()
+    assert spy.call_count == 0

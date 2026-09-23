@@ -11,6 +11,7 @@ import traceback
 from authlib.integrations.base_client.errors import OAuthError
 import click
 from click import UsageError, get_current_context
+from requests.exceptions import ConnectionError as RequestsConnectionError
 from requests.exceptions import HTTPError
 import sentry_sdk
 from sentry_sdk import capture_exception
@@ -183,6 +184,14 @@ cli.add_command(user_group, name="user")
 def main():
     try:
         cli()
+    except RequestsConnectionError as e:
+        click.secho(
+            "Unable to connect to the ISIC Archive. Check your network connection and try again.",
+            fg="red",
+            err=True,
+        )
+        click.echo(str(e), err=True)
+        sys.exit(1)
     except Exception as e:  # noqa: BLE001
         click.echo(
             click.style(
