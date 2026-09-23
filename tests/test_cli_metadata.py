@@ -38,10 +38,10 @@ def _mock_image_metadata(mocker):
     )
 
 
-def test_metadata_validate(runner, cli_run):
+@pytest.mark.parametrize("encoding", ["utf-8", "utf-8-sig"], ids=["no_bom", "bom"])
+def test_metadata_validate(runner, cli_run, encoding):
     with runner.isolated_filesystem():
-        with Path("foo.csv").open("w") as f:
-            f.write("diagnosis,sex\nfoo,bar")
+        Path("foo.csv").write_text("diagnosis,sex\nfoo,bar", encoding=encoding)
 
         result = cli_run(["metadata", "validate", "foo.csv"])
 

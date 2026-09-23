@@ -40,7 +40,9 @@ def metadata(obj):
 @metadata.command(name="validate")
 @click.argument(
     "csv_file",
-    type=click.File("r"),
+    # utf-8-sig matches what the ISIC Archive accepts for metadata uploads, and strips the
+    # BOM that Excel adds to "CSV UTF-8" exports.
+    type=click.File("r", encoding="utf-8-sig"),
 )
 def validate(csv_file: io.TextIOWrapper):  # noqa: C901, PLR0915, PLR0912
     """Validate metadata from a local csv."""
