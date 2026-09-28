@@ -1,8 +1,77 @@
 [build-system]
-requires = ["setuptools >= 42", "wheel", "setuptools-scm[toml]>=3.4"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1,<2", "hatch-vcs>=0.4,<1"]
+build-backend = "hatchling.build"
 
-[tool.setuptools_scm]
+[project]
+name = "isic-cli"
+description = "The official command line tool for interacting with the ISIC Archive."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+maintainers = [{ name = "Kitware, Inc.", email = "kitware@kitware.com" }]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Web Environment",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+  "click>=8.2.0",
+  "django-s3-file-field-client>=1.0.0",
+  # We expect girder-cli-oauth-client to drop oob support in the future
+  "girder-cli-oauth-client<1.0.0",
+  "humanize",
+  "isic-metadata>=5.0.0",
+  "more-itertools",
+  "packaging",
+  "requests",
+  "retryable-requests",
+  "rich",
+  "sentry-sdk",
+  "tenacity",
+]
+dynamic = ["version"]
+
+[project.urls]
+Repository = "https://github.com/ImageMarkup/isic-cli"
+"Bug Reports" = "https://github.com/ImageMarkup/isic-cli/issues"
+
+[project.scripts]
+isic = "isic_cli.cli:main"
+
+[dependency-groups]
+dev = [
+  "ipython",
+  "tox",
+  "tox-uv",
+]
+lint = [
+  "ruff==0.5.0",
+]
+type = [
+  "pyright",
+]
+test = [
+  "pytest",
+  "pytest-lazy-fixtures",
+  "pytest-mock",
+]
+package = [
+  "pyinstaller",
+]
+
+[tool.hatch.build]
+only-include = [
+  "isic_cli",
+]
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.ruff]
 line-length = 100
@@ -63,3 +132,10 @@ required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"
+
+[tool.pytest.ini_options]
+addopts = [
+  "--strict-markers",
+  "--showlocals",
+  "--verbose",
+]
