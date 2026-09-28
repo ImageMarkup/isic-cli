@@ -22,7 +22,7 @@ def get_version() -> Version | None:
 
 def is_dev_install():
     version = get_version()
-    return not version or version.dev
+    return not version or version.is_devrelease
 
 
 def upgrade_type(from_version: Version, to_version: Version) -> str | None:
