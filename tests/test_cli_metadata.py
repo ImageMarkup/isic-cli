@@ -131,12 +131,12 @@ def test_metadata_download_unwritable_output(cli_run):
     assert not (readonly / "child.csv").exists()
 
 
-@pytest.mark.usefixtures("_mock_image_metadata")
+@pytest.mark.usefixtures("_mock_image_metadata", "_isolated_filesystem")
 @pytest.mark.parametrize(
     "cli_runner",
     [lf("cli_run"), lf("cli_run_non_utf8")],
 )
-def test_metadata_download_newlines(cli_runner, mocker):
+def test_metadata_download_newlines(cli_runner):
     result = cli_runner(["metadata", "download", "-o", "foo.csv"])
 
     assert result.exit_code == 0, result.exception
