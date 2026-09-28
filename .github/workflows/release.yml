@@ -10,18 +10,13 @@ jobs:
         with:
           # Tags are needed to compute the current version number
           fetch-depth: 0
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
-      - name: Install tox
+      - name: Install uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+      - name: Build the Python distribution
         run: |
-          pip install --upgrade pip
-          pip install tox
-      - name: Publish to PyPI
+          uv build
+      - name: Publish the Python distributions to PyPI
         env:
-          TWINE_USERNAME: "__token__"
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-          TWINE_NON_INTERACTIVE: "true"
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: |
-          tox -e release
+          uv publish

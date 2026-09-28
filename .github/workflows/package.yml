@@ -22,16 +22,8 @@ jobs:
 
       # the checkout action has to be after a newer version of git is installed
       # see https://github.com/actions/checkout/issues/335. we need the git directory
-      # for setuptools-scm to work.
+      # for hatch-vcs to work.
       - uses: actions/checkout@v3
-
-      # the setup-python action doesn't work due to the older version of glibc
-      # see https://github.com/actions/setup-python/issues/1053
-      - name: Set up Python
-        run: |
-          uv python install 3.12
-          ln -s $(uv python find 3.12) /usr/bin/python
-          ln -s $(dirname $(uv python find 3.12))/pip /usr/bin/pip
 
       # this is needed when building in docker since the repo is cloned as root.
       # must run before the packaging step, which uses git to find tracked files.
@@ -41,8 +33,10 @@ jobs:
           git config --global --add safe.directory $(pwd)
 
       - name: Run packaging step
+        env:
+          UV_PYTHON: "3.12"
         run: |
-          uvx tox -e package
+          uv run tox -e package
 
       - name: Install GitHub CLI
         run: |
@@ -67,17 +61,13 @@ jobs:
           - windows-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           python-version: "3.12"
-      - name: Install tox
-        run: |
-          pip install --upgrade pip
-          pip install tox
       - name: Run packaging step
         run: |
-          tox -e package
+          uv run tox -e package
       - name: Zip and upload binary
         run: |
           .github/zip_and_upload_package.sh ${{ runner.os }} ${{ github.event.release.tag_name }}
