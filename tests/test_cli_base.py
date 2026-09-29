@@ -123,3 +123,11 @@ def test_connection_error_is_not_reported_as_bug(mocker, capsys):
     assert "Unable to connect to the ISIC Archive" in capsys.readouterr().err
     prompt.assert_not_called()
     assert spy.call_count == 0
+
+
+@pytest.mark.parametrize("command", ["image", "metadata"])
+def test_download_help(cli_run, command):
+    result = cli_run([command, "download", "--help"])
+
+    assert result.exit_code == 0, result.exception
+    assert "The search query uses a simple DSL syntax." in result.output

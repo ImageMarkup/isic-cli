@@ -84,9 +84,7 @@ def image(ctx):
     pass
 
 
-@image.command(
-    name="download", help="Download a set of images and metadata, optionally filtering results."
-)
+@image.command(name="download")
 @click.option(
     "-s",
     "--search",
@@ -126,7 +124,7 @@ def download(
     outdir: Path,
 ):
     """
-    Download images from the ISIC Archive.
+    Download a set of images and metadata, optionally filtering results.
 
     The search query uses a simple DSL syntax.
 
