@@ -497,7 +497,7 @@ type = [
 
 [package.metadata]
 requires-dist = [
-    { name = "click", specifier = ">=8.2.0" },
+    { name = "click", specifier = ">=8.3.0" },
     { name = "django-s3-file-field-client", specifier = ">=1.0.0" },
     { name = "girder-cli-oauth-client", specifier = "<1.0.0" },
     { name = "humanize" },

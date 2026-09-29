@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 import datetime
 from http.client import HTTPConnection
 import logging
@@ -7,10 +8,12 @@ import os
 import platform
 import sys
 import traceback
+from typing import TYPE_CHECKING
 
 from authlib.integrations.base_client.errors import OAuthError
 import click
-from click import UsageError, get_current_context
+from click import Abort, ClickException, UsageError
+from click.exceptions import Exit
 from requests.exceptions import ConnectionError as RequestsConnectionError
 from requests.exceptions import HTTPError
 import sentry_sdk
@@ -33,6 +36,9 @@ from isic_cli.io.http import get_users_me
 from isic_cli.oauth import get_oauth_client
 from isic_cli.session import get_session
 from isic_cli.utils.version import check_for_newer_version, get_version, is_dev_install
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 DOMAINS = {
     "dev": "http://127.0.0.1:8000",
@@ -108,7 +114,9 @@ def _sentry_setup():
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose mode.")
 @click.version_option()
 @click.pass_context
-def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_check: bool):  # noqa: FBT001, C901, PLR0913
+def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_check: bool) -> None:  # noqa: FBT001, C901, PLR0913
+    ctx.with_resource(_report_unexpected_errors(ctx))
+
     logger.addHandler(logging.StreamHandler(sys.stderr))
     logger.setLevel(logging.WARNING)
 
@@ -179,9 +187,15 @@ cli.add_command(metadata_group, name="metadata")
 cli.add_command(user_group, name="user")
 
 
-def main():
+# registered on the root context so it runs while ctx.obj is still available. click tears
+# the context down before an exception could reach main.
+@contextmanager
+def _report_unexpected_errors(ctx: click.Context) -> Iterator[None]:
     try:
-        cli()
+        yield
+    # click's standalone mode handles these once the context has closed
+    except (ClickException, Exit, Abort, EOFError, BrokenPipeError):
+        raise
     except RequestsConnectionError as e:
         click.secho(
             "Unable to connect to the ISIC Archive. Check your network connection and try again.",
@@ -201,15 +215,15 @@ def main():
 
         click.echo(traceback.format_exc(), err=True)
 
-        ctx = get_current_context(silent=True)
         env = "-"
         user = "-"
 
-        if ctx and ctx.obj:
-            env = ctx.obj["env"]
+        isic_context: IsicContext | None = ctx.obj
+        if isic_context:
+            env = isic_context.env
 
-            if ctx.obj.user:
-                user = ctx.obj.user["id"]
+            if isic_context.user:
+                user = isic_context.user["id"]
 
         set_tag("platform", platform.system())
         set_tag("isic-env", env)
@@ -228,21 +242,33 @@ def main():
         click.echo(f'command:  isic {" ".join(sys.argv[1:])}\n', err=True)
 
         if is_dev_install():
-            return
+            sys.exit(1)
 
-        send_bug_report = click.prompt(
-            click.style(
-                "This is a bug in isic-cli, would you like to send a bug report?", fg="yellow"
-            ),
-            type=click.Choice(choices=["y", "n"]),
-            default="y",
-            err=True,
-            show_choices=True,
-        )
+        # the prompt can't be answered without an interactive terminal (e.g. cron, CI, or piped
+        # input), so only point to the issue tracker.
+        send_bug_report = "n"
+        if sys.stdin.isatty():
+            send_bug_report = click.prompt(
+                click.style(
+                    "This is a bug in isic-cli, would you like to send a bug report?", fg="yellow"
+                ),
+                type=click.Choice(choices=["y", "n"]),
+                default="y",
+                err=True,
+                show_choices=True,
+            )
 
         # this is the only code that actually sends data to sentry, so it's guarded with an opt-in
         if send_bug_report == "y":
             capture_exception(e)
         else:
-            click.secho("Alternatively you can open an issue below: \n", fg="yellow", err=True)
+            click.secho(
+                "You can report this bug by opening an issue below: \n", fg="yellow", err=True
+            )
             click.echo("https://github.com/ImageMarkup/isic-cli/issues/new", err=True)
+
+        sys.exit(1)
+
+
+def main():
+    cli()
