@@ -39,14 +39,17 @@ def test_new_version(
 
 
 @pytest.mark.parametrize(
-    ("interactive", "send_bug_report", "capture_exception_sent"),
+    ("interactive", "sentry_initialized", "send_bug_report", "capture_exception_sent"),
     [
-        (True, "y", 1),
-        (True, "n", 0),
-        (False, None, 0),
+        (True, True, "y", 1),
+        (True, True, "n", 0),
+        (False, True, None, 0),
+        (True, False, None, 0),
     ],
 )
-def test_sentry_error_capture(mocker, capsys, interactive, send_bug_report, capture_exception_sent):
+def test_sentry_error_capture(
+    mocker, capsys, interactive, sentry_initialized, send_bug_report, capture_exception_sent
+):
     # Note: _sentry_setup is always mocked
     from isic_cli import cli
     from isic_cli.cli import main
@@ -59,13 +62,14 @@ def test_sentry_error_capture(mocker, capsys, interactive, send_bug_report, capt
     mocker.patch("isic_cli.cli.is_dev_install", return_value=False)
     stdin = mocker.patch.object(sys, "stdin")
     stdin.isatty.return_value = interactive
+    mocker.patch("isic_cli.cli.sentry_sdk.is_initialized", return_value=sentry_initialized)
 
     spy = mocker.spy(cli, "capture_exception")
     with pytest.raises(SystemExit) as exc_info:
         main()
 
     assert exc_info.value.code == 1
-    assert prompt.called == interactive
+    assert prompt.called == (interactive and sentry_initialized)
     assert spy.call_count == capture_exception_sent
     issue_link_shown = (
         "https://github.com/ImageMarkup/isic-cli/issues/new" in capsys.readouterr().err

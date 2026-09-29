@@ -35,6 +35,7 @@ jobs:
       - name: Run packaging step
         env:
           UV_PYTHON: "3.12"
+          ISIC_CLI_SENTRY_DSN: ${{ secrets.ISIC_CLI_SENTRY_DSN }}
         run: |
           uv run tox -e package
 
@@ -68,6 +69,8 @@ jobs:
       - name: Run packaging step
         run: |
           uv run tox -e package
+        env:
+          ISIC_CLI_SENTRY_DSN: ${{ secrets.ISIC_CLI_SENTRY_DSN }}
       - name: Zip and upload binary
         run: |
           .github/zip_and_upload_package.sh ${{ runner.os }} ${{ github.event.release.tag_name }}

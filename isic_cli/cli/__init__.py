@@ -37,6 +37,12 @@ from isic_cli.oauth import get_oauth_client
 from isic_cli.session import get_session
 from isic_cli.utils.version import check_for_newer_version, get_version, is_dev_install
 
+# the DSN is kept out of the source. this module only exists in the pyinstaller binaries.
+try:
+    from _isic_cli_sentry_dsn import SENTRY_DSN  # pyright: ignore[reportMissingImports]
+except ImportError:
+    SENTRY_DSN: str | None = None
+
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
@@ -45,8 +51,6 @@ DOMAINS = {
     "sandbox": "https://api-sandbox.isic-archive.com",
     "prod": "https://api.isic-archive.com",
 }
-
-SENTRY_DSN = "https://3c3afa5c12e04042979583df1a07abd2@o267860.ingest.sentry.io/6645383"
 
 logger = logging.getLogger("isic_cli")
 
@@ -59,7 +63,9 @@ def _sentry_atexit_display(pending: int, timeout: int) -> None:
 
 
 def _sentry_setup():
-    if not is_dev_install():
+    # don't pass a missing dsn to sentry_sdk.init, it would fall back to the generic SENTRY_DSN
+    # environment variable which may belong to an unrelated project.
+    if SENTRY_DSN and not is_dev_install():
         sentry_sdk.init(
             SENTRY_DSN,
             release=str(get_version()),
@@ -245,9 +251,10 @@ def _report_unexpected_errors(ctx: click.Context) -> Iterator[None]:
             sys.exit(1)
 
         # the prompt can't be answered without an interactive terminal (e.g. cron, CI, or piped
-        # input), so only point to the issue tracker.
+        # input), and a bug report can't be sent without a DSN (e.g. a pip install), so only
+        # point to the issue tracker.
         send_bug_report = "n"
-        if sys.stdin.isatty():
+        if sys.stdin.isatty() and sentry_sdk.is_initialized():
             send_bug_report = click.prompt(
                 click.style(
                     "This is a bug in isic-cli, would you like to send a bug report?", fg="yellow"
