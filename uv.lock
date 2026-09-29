@@ -507,7 +507,7 @@ requires-dist = [
     { name = "requests" },
     { name = "retryable-requests" },
     { name = "rich" },
-    { name = "sentry-sdk" },
+    { name = "sentry-sdk", specifier = ">=2.0.0" },
     { name = "tenacity" },
 ]
 

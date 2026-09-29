@@ -32,7 +32,7 @@ dependencies = [
   "requests",
   "retryable-requests",
   "rich",
-  "sentry-sdk",
+  "sentry-sdk>=2.0.0",
   "tenacity",
 ]
 dynamic = ["version"]
@@ -115,6 +115,9 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"scripts/**" = [
+  "INP001", # File is part of an implicit namespace package
+]
 "tests/**" = [
   "PLR0913", # Too many arguments to function call
   "PLR2004", # Magic value used in comparison
