@@ -21,7 +21,7 @@ classifiers = [
   "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
-  "click>=8.2.0",
+  "click>=8.3.0",
   "django-s3-file-field-client>=1.0.0",
   # We expect girder-cli-oauth-client to drop oob support in the future
   "girder-cli-oauth-client<1.0.0",

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from packaging.version import Version
 import pytest
 
@@ -48,10 +50,10 @@ def test_sentry_error_capture(mocker, send_bug_report, capture_exception_sent):
     from isic_cli import cli
     from isic_cli.cli import main
 
-    def _exception():
-        raise Exception("foo")  # noqa: TRY002
-
-    mocker.patch("isic_cli.cli.cli", side_effect=_exception)
+    mocker.patch("isic_cli.cli.collection.get_collections", side_effect=RuntimeError("foo"))
+    mocker.patch.object(
+        sys, "argv", ["isic", "--guest", "--no-version-check", "collection", "list"]
+    )
     mocker.patch("isic_cli.cli.click.prompt", return_value=send_bug_report)
     mocker.patch("isic_cli.cli.is_dev_install", return_value=False)
 
@@ -60,13 +62,39 @@ def test_sentry_error_capture(mocker, send_bug_report, capture_exception_sent):
     assert spy.call_count == capture_exception_sent
 
 
+@pytest.mark.usefixtures("_mock_user")
+def test_bug_report_describes_env_and_user(mocker, capsys):
+    from isic_cli.cli import main
+
+    user = {"id": 1, "email": "fakeuser@email.test"}
+    mocker.patch("isic_cli.cli.get_users_me", return_value=user)
+    mocker.patch("isic_cli.cli.collection.get_collections", side_effect=RuntimeError("foo"))
+    mocker.patch("isic_cli.cli.is_dev_install", return_value=True)
+    mocker.patch.object(
+        sys, "argv", ["isic", "--sandbox", "--no-version-check", "collection", "list"]
+    )
+
+    main()
+
+    err = capsys.readouterr().err
+    assert "RuntimeError: foo" in err
+    assert "env:      sandbox" in err
+    assert f"user:     {user['id']}" in err
+
+
 def test_connection_error_is_not_reported_as_bug(mocker, capsys):
     from requests.exceptions import SSLError
 
     from isic_cli import cli
     from isic_cli.cli import main
 
-    mocker.patch("isic_cli.cli.cli", side_effect=SSLError("EOF occurred in violation of protocol"))
+    mocker.patch(
+        "isic_cli.cli.collection.get_collections",
+        side_effect=SSLError("EOF occurred in violation of protocol"),
+    )
+    mocker.patch.object(
+        sys, "argv", ["isic", "--guest", "--no-version-check", "collection", "list"]
+    )
     mocker.patch("isic_cli.cli.is_dev_install", return_value=False)
     prompt = mocker.patch("isic_cli.cli.click.prompt")
     spy = mocker.spy(cli, "capture_exception")
