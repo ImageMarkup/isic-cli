@@ -153,15 +153,11 @@ def download(
 
     outdir.mkdir(parents=True, exist_ok=True)
 
-    def signal_handler(signum, frame):
-        cleanup_partially_downloaded_files(outdir)
-        sys.exit(1)
-
-    # remove partially downloaded files on exit
+    # remove partially downloaded files on exit. this runs after the download threads have
+    # finished, so it can't remove a file that's still being written.
     atexit.register(cleanup_partially_downloaded_files, outdir)
-    # also remove partially downloaded files on SIGINT/SIGTERM
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
+    # SIGTERM exits without running atexit handlers by default, so handle it like SIGINT
+    signal.signal(signal.SIGTERM, signal.default_int_handler)
 
     archive_num_images = get_num_images(ctx.session, search, collections)
     download_num_images = archive_num_images if limit == 0 else min(archive_num_images, limit)
