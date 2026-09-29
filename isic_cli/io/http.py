@@ -6,7 +6,7 @@ from pathlib import PurePosixPath
 import shutil
 from tempfile import NamedTemporaryFile
 from typing import TYPE_CHECKING
-from urllib.parse import urlparse
+from urllib.parse import urlencode, urlparse
 
 from more_itertools import chunked
 from requests.exceptions import ChunkedEncodingError, ConnectionError
@@ -93,7 +93,7 @@ def bulk_collection_operation(  # noqa: PLR0913
 
 
 def get_images(session: IsicCliSession, search: str = "", collections: str = "") -> Iterable[dict]:
-    next_page = f"images/search/?query={search}&collections={collections}"
+    next_page = f"images/search/?{urlencode({'query': search, 'collections': collections})}"
 
     while next_page:
         r = session.get(next_page)
