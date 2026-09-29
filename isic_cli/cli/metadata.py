@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import contextlib
 import csv
 import itertools
 import os
@@ -211,12 +212,12 @@ def download(
         )
         headers, records = _extract_metadata(images, progress, task)
 
-    if records:
+    with contextlib.ExitStack() as stack:
         if outfile is None or os.fsdecode(outfile) == "-":
             sys.stdout.reconfigure(encoding="utf8")
             stream = sys.stdout
         else:
-            stream = Path(outfile).open("w", newline="", encoding="utf8")  # noqa: SIM115
+            stream = stack.enter_context(Path(outfile).open("w", newline="", encoding="utf8"))
 
         writer = csv.DictWriter(stream, headers)
         writer.writeheader()

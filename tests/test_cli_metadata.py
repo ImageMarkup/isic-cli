@@ -113,6 +113,17 @@ def test_metadata_download_file(cli_runner):
     assert re.search(r"ISIC_0000000.*Foo.*CC-0.*melanoma.*male", output), output
 
 
+@pytest.mark.usefixtures("_isolated_filesystem")
+def test_metadata_download_no_results(cli_run, mocker):
+    mocker.patch("isic_cli.cli.metadata.get_num_images", return_value=0)
+    mocker.patch("isic_cli.cli.metadata.get_images", return_value=iter([]))
+
+    result = cli_run(["metadata", "download", "-o", "foo.csv"])
+
+    assert result.exit_code == 0, result.exception
+    assert Path("foo.csv").read_text().splitlines() == ["isic_id,attribution,copyright_license"]
+
+
 @pytest.mark.usefixtures("_mock_image_metadata", "_isolated_filesystem")
 @pytest.mark.parametrize(
     "output_file", ["/metadata.csv", f"{'1' * 255}.csv"], ids=["no_permissions", "bad_filename"]
