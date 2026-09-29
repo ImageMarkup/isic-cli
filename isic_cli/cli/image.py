@@ -193,7 +193,8 @@ def download(
         with ThreadPoolExecutor(max(10, os.cpu_count() or 10)) as thread_pool:
             for image_chunk in chunked(images_iterator, 100):
                 images.extend(image_chunk)
-                thread_pool.map(func, image_chunk)
+                # consume the results so a failed download raises instead of being ignored
+                list(thread_pool.map(func, image_chunk))
 
         headers, records = _extract_metadata(images)
         with (outdir / "metadata.csv").open("w", newline="", encoding="utf8") as outfile:

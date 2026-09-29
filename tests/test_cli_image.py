@@ -55,6 +55,20 @@ def test_image_download(cli_run, outdir):
 
 
 @pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")
+def test_image_download_failure(mocker, cli_run, outdir):
+    mocker.patch(
+        "isic_cli.cli.image.download_image",
+        side_effect=HTTPError(response=mocker.MagicMock(status_code=403)),
+    )
+
+    result = cli_run(["image", "download", outdir])
+
+    assert result.exit_code == 1, result.exception
+    assert "Successfully downloaded" not in result.output
+    assert not Path(f"{outdir}/metadata.csv").exists()
+
+
+@pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")
 def test_image_download_no_collection(mocker, cli_run, outdir):
     mocker.patch(
         "isic_cli.cli.types.get_collection",
