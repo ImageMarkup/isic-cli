@@ -244,21 +244,27 @@ def _report_unexpected_errors(ctx: click.Context) -> Iterator[None]:
         if is_dev_install():
             sys.exit(1)
 
-        send_bug_report = click.prompt(
-            click.style(
-                "This is a bug in isic-cli, would you like to send a bug report?", fg="yellow"
-            ),
-            type=click.Choice(choices=["y", "n"]),
-            default="y",
-            err=True,
-            show_choices=True,
-        )
+        # the prompt can't be answered without an interactive terminal (e.g. cron, CI, or piped
+        # input), so only point to the issue tracker.
+        send_bug_report = "n"
+        if sys.stdin.isatty():
+            send_bug_report = click.prompt(
+                click.style(
+                    "This is a bug in isic-cli, would you like to send a bug report?", fg="yellow"
+                ),
+                type=click.Choice(choices=["y", "n"]),
+                default="y",
+                err=True,
+                show_choices=True,
+            )
 
         # this is the only code that actually sends data to sentry, so it's guarded with an opt-in
         if send_bug_report == "y":
             capture_exception(e)
         else:
-            click.secho("Alternatively you can open an issue below: \n", fg="yellow", err=True)
+            click.secho(
+                "You can report this bug by opening an issue below: \n", fg="yellow", err=True
+            )
             click.echo("https://github.com/ImageMarkup/isic-cli/issues/new", err=True)
 
         sys.exit(1)

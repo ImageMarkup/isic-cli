@@ -39,13 +39,14 @@ def test_new_version(
 
 
 @pytest.mark.parametrize(
-    ("send_bug_report", "capture_exception_sent"),
+    ("interactive", "send_bug_report", "capture_exception_sent"),
     [
-        ("y", 1),
-        ("n", 0),
+        (True, "y", 1),
+        (True, "n", 0),
+        (False, None, 0),
     ],
 )
-def test_sentry_error_capture(mocker, send_bug_report, capture_exception_sent):
+def test_sentry_error_capture(mocker, capsys, interactive, send_bug_report, capture_exception_sent):
     # Note: _sentry_setup is always mocked
     from isic_cli import cli
     from isic_cli.cli import main
@@ -54,15 +55,22 @@ def test_sentry_error_capture(mocker, send_bug_report, capture_exception_sent):
     mocker.patch.object(
         sys, "argv", ["isic", "--guest", "--no-version-check", "collection", "list"]
     )
-    mocker.patch("isic_cli.cli.click.prompt", return_value=send_bug_report)
+    prompt = mocker.patch("isic_cli.cli.click.prompt", return_value=send_bug_report)
     mocker.patch("isic_cli.cli.is_dev_install", return_value=False)
+    stdin = mocker.patch.object(sys, "stdin")
+    stdin.isatty.return_value = interactive
 
     spy = mocker.spy(cli, "capture_exception")
     with pytest.raises(SystemExit) as exc_info:
         main()
 
     assert exc_info.value.code == 1
+    assert prompt.called == interactive
     assert spy.call_count == capture_exception_sent
+    issue_link_shown = (
+        "https://github.com/ImageMarkup/isic-cli/issues/new" in capsys.readouterr().err
+    )
+    assert issue_link_shown == (capture_exception_sent == 0)
 
 
 @pytest.mark.usefixtures("_mock_user")
