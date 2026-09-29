@@ -203,8 +203,8 @@ def download(
         licenses = {record["copyright_license"] for record in records}
         (outdir / "licenses").mkdir(exist_ok=True)
         for license_type in licenses:
-            with (outdir / "licenses" / f"{license_type}.txt").open("w") as outfile:
-                outfile.write(get_license(ctx.session, license_type))
+            license_text = get_license(ctx.session, license_type)
+            (outdir / "licenses" / f"{license_type}.txt").write_text(license_text, encoding="utf8")
 
     click.echo()
     click.secho(f"Successfully downloaded {nice_num_images} images to {outdir}/.", fg="green")
