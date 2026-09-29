@@ -58,7 +58,10 @@ def test_sentry_error_capture(mocker, send_bug_report, capture_exception_sent):
     mocker.patch("isic_cli.cli.is_dev_install", return_value=False)
 
     spy = mocker.spy(cli, "capture_exception")
-    main()
+    with pytest.raises(SystemExit) as exc_info:
+        main()
+
+    assert exc_info.value.code == 1
     assert spy.call_count == capture_exception_sent
 
 
@@ -74,8 +77,10 @@ def test_bug_report_describes_env_and_user(mocker, capsys):
         sys, "argv", ["isic", "--sandbox", "--no-version-check", "collection", "list"]
     )
 
-    main()
+    with pytest.raises(SystemExit) as exc_info:
+        main()
 
+    assert exc_info.value.code == 1
     err = capsys.readouterr().err
     assert "RuntimeError: foo" in err
     assert "env:      sandbox" in err

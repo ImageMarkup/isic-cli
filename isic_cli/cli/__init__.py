@@ -242,7 +242,7 @@ def _report_unexpected_errors(ctx: click.Context) -> Iterator[None]:
         click.echo(f'command:  isic {" ".join(sys.argv[1:])}\n', err=True)
 
         if is_dev_install():
-            return
+            sys.exit(1)
 
         send_bug_report = click.prompt(
             click.style(
@@ -260,6 +260,8 @@ def _report_unexpected_errors(ctx: click.Context) -> Iterator[None]:
         else:
             click.secho("Alternatively you can open an issue below: \n", fg="yellow", err=True)
             click.echo("https://github.com/ImageMarkup/isic-cli/issues/new", err=True)
+
+        sys.exit(1)
 
 
 def main():
