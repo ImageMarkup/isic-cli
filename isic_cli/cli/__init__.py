@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 import datetime
-from http.client import HTTPConnection
 import logging
 import os
 import platform
@@ -127,10 +126,9 @@ def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_ch
     logger.setLevel(logging.WARNING)
 
     if verbose:
-        HTTPConnection.debuglevel = 1
-        requests_log = logging.getLogger("requests.packages.urllib3")
-        requests_log.addHandler(logging.StreamHandler(sys.stderr))
-        requests_log.setLevel(logging.DEBUG)
+        urllib3_log = logging.getLogger("urllib3")
+        urllib3_log.addHandler(logging.StreamHandler(sys.stderr))
+        urllib3_log.setLevel(logging.DEBUG)
         logger.setLevel(logging.DEBUG)
 
     if sandbox and dev:
@@ -163,27 +161,29 @@ def cli(ctx, verbose: bool, guest: bool, sandbox: bool, dev: bool, no_version_ch
             click.secho(
                 "Something went wrong with restoring a login, you may need to log back in.",
                 fg="yellow",
+                err=True,
             )
 
-    with get_session(f"{DOMAINS[env]}/api/v2/", oauth.auth_headers) as session:
-        user = None
-        if oauth.auth_headers:
-            try:
-                user = get_users_me(session)
-            except HTTPError as e:
-                if e.response.status_code == 404:
-                    # perhaps a stale token
-                    oauth.logout()
-                else:
-                    raise
+    session = ctx.with_resource(get_session(f"{DOMAINS[env]}/api/v2/", oauth.auth_headers))
 
-        ctx.obj = IsicContext(
-            oauth=oauth,
-            session=session,
-            env=env,
-            user=user,
-            verbose=verbose,
-        )
+    user = None
+    if oauth.auth_headers:
+        try:
+            user = get_users_me(session)
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                # perhaps a stale token
+                oauth.logout()
+            else:
+                raise
+
+    ctx.obj = IsicContext(
+        oauth=oauth,
+        session=session,
+        env=env,
+        user=user,
+        verbose=verbose,
+    )
 
 
 cli.add_command(accession_group, name="accession")

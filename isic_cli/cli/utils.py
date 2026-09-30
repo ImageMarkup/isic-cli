@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter
+import functools
 import sys
 from typing import TYPE_CHECKING
 
@@ -13,18 +14,20 @@ if TYPE_CHECKING:
 
 
 def suggest_guest_login(f):
+    @functools.wraps(f)
     def decorator(ctx: IsicContext, **kwargs):
         if not ctx.user:
             click.echo(
                 "If you have been granted special permissions, logging in with `isic user login` might return more data.\n",  # noqa: E501
                 err=True,
             )
-        f(ctx, **kwargs)
+        return f(ctx, **kwargs)
 
     return decorator
 
 
 def require_login(f):
+    @functools.wraps(f)
     def decorator(ctx: IsicContext, **kwargs):
         if not ctx.user:
             click.echo(
@@ -33,7 +36,7 @@ def require_login(f):
             )
             sys.exit(1)
 
-        f(ctx, **kwargs)
+        return f(ctx, **kwargs)
 
     return decorator
 

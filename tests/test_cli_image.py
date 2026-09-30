@@ -6,7 +6,7 @@ from pathlib import Path
 import sys
 
 import pytest
-from requests import HTTPError
+from requests import HTTPError, Response
 
 from isic_cli.cli.image import cleanup_partially_downloaded_files
 
@@ -52,6 +52,20 @@ def test_image_download(cli_run, outdir):
     assert Path(f"{outdir}/metadata.csv").exists()
     assert Path(f"{outdir}/attribution.txt").exists()
     assert Path(f"{outdir}/licenses/CC-0.txt").exists()
+
+
+@pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")
+def test_image_download_failure(mocker, cli_run, outdir):
+    mocker.patch(
+        "isic_cli.cli.image.download_image",
+        side_effect=HTTPError(response=mocker.MagicMock(status_code=403)),
+    )
+
+    result = cli_run(["image", "download", outdir])
+
+    assert result.exit_code == 1, result.exception
+    assert "Successfully downloaded" not in result.output
+    assert not Path(f"{outdir}/metadata.csv").exists()
 
 
 @pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")
@@ -124,6 +138,19 @@ def test_image_download_legacy_diagnosis_unsupported(cli_run, outdir):
     result = cli_run(["image", "download", outdir, "--search", "diagnosis:melanoma"])
     assert result.exit_code == 2
     assert "no longer supported" in result.output
+
+
+@pytest.mark.usefixtures("_isolated_filesystem", "_mock_images")
+def test_image_download_search_server_error(mocker, cli_run, outdir):
+    response = Response()
+    response.status_code = 500
+    mocker.patch("isic_cli.session.IsicCliSession.get", return_value=response)
+
+    result = cli_run(["--guest", "image", "download", outdir, "--search", "age_approx:50"])
+
+    assert result.exit_code == 1, result.exception
+    assert "500 Server Error" in result.output
+    assert not Path(outdir).exists()
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="chmod doesn't restrict directory writes")

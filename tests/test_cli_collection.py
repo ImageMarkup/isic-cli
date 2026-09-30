@@ -110,19 +110,35 @@ def test_collection_add_images(cli_run, mocker):
             "doi": None,
         },
     )
+    succeeded = [f"ISIC_{i:07d}" for i in reversed(range(4))]
     mocker.patch(
         "isic_cli.cli.collection.bulk_collection_operation",
         return_value={
-            "succeeded": ["ISIC_0000000"],
+            "succeeded": succeeded,
             "no_perms_or_does_not_exist": ["ISIC_1234567"],
             "private_image_public_collection": ["ISIC_1111111"],
+            "some_new_status": ["ISIC_2222222"],
         },
     )
 
     result = cli_run(
         ["collection", "add-images", "1", "--from-isic-ids", "-"],
         input="ISIC_1111111\nISIC_1234567",
+        # keep the examples column from wrapping
+        env={"COLUMNS": "200"},
     )
 
     assert result.exit_code == 0, (result.exception, result.output)
-    assert re.search(r"Image added.*ISIC_0000000", result.output), result.output
+    examples = ", ".join(sorted(succeeded)[:3])
+    assert re.search(rf"Image added.*{examples}, etc\.", result.output), result.output
+    assert re.search(r"some_new_status.*ISIC_2222222", result.output), result.output
+
+
+@pytest.mark.usefixtures("_mock_user")
+def test_collection_add_images_empty_input(cli_run, mocker):
+    mocker.patch("isic_cli.cli.types.get_collection", return_value={"locked": False})
+
+    result = cli_run(["collection", "add-images", "1", "--from-isic-ids", "-"], input="\n")
+
+    assert result.exit_code == 1, (result.exception, result.output)
+    assert "No ISIC IDs were provided." in result.output

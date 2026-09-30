@@ -4,6 +4,8 @@ from pathlib import Path
 import re
 import sys
 
+from authlib.integrations.base_client.errors import OAuthError
+from girder_cli_oauth_client import GirderCliOAuthClient
 import pytest
 from pytest_lazy_fixtures import lf
 
@@ -82,6 +84,19 @@ def test_metadata_download_stdout(cli_runner):
     assert re.search(r"ISIC_0000000.*Foo.*CC-0.*melanoma.*male", result.output), result.output
 
 
+@pytest.mark.usefixtures("_mock_image_metadata")
+def test_metadata_download_stdout_failed_login_restore(cli_run, mocker):
+    mocker.patch.object(
+        GirderCliOAuthClient, "maybe_restore_login", side_effect=OAuthError(error="invalid_grant")
+    )
+
+    result = cli_run(["metadata", "download"])
+
+    assert result.exit_code == 0, result.exception
+    assert "Something went wrong with restoring a login" in result.stderr
+    assert result.stdout.startswith("isic_id,"), result.stdout
+
+
 @pytest.mark.usefixtures("_mock_image_metadata", "_isolated_filesystem")
 @pytest.mark.parametrize(
     "cli_runner",
@@ -96,6 +111,17 @@ def test_metadata_download_file(cli_runner):
         output = f.read()
 
     assert re.search(r"ISIC_0000000.*Foo.*CC-0.*melanoma.*male", output), output
+
+
+@pytest.mark.usefixtures("_isolated_filesystem")
+def test_metadata_download_no_results(cli_run, mocker):
+    mocker.patch("isic_cli.cli.metadata.get_num_images", return_value=0)
+    mocker.patch("isic_cli.cli.metadata.get_images", return_value=iter([]))
+
+    result = cli_run(["metadata", "download", "-o", "foo.csv"])
+
+    assert result.exit_code == 0, result.exception
+    assert Path("foo.csv").read_text().splitlines() == ["isic_id,attribution,copyright_license"]
 
 
 @pytest.mark.usefixtures("_mock_image_metadata", "_isolated_filesystem")

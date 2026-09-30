@@ -84,9 +84,7 @@ def image(ctx):
     pass
 
 
-@image.command(
-    name="download", help="Download a set of images and metadata, optionally filtering results."
-)
+@image.command(name="download")
 @click.option(
     "-s",
     "--search",
@@ -126,7 +124,7 @@ def download(
     outdir: Path,
 ):
     """
-    Download images from the ISIC Archive.
+    Download a set of images and metadata, optionally filtering results.
 
     The search query uses a simple DSL syntax.
 
@@ -153,15 +151,11 @@ def download(
 
     outdir.mkdir(parents=True, exist_ok=True)
 
-    def signal_handler(signum, frame):
-        cleanup_partially_downloaded_files(outdir)
-        sys.exit(1)
-
-    # remove partially downloaded files on exit
+    # remove partially downloaded files on exit. this runs after the download threads have
+    # finished, so it can't remove a file that's still being written.
     atexit.register(cleanup_partially_downloaded_files, outdir)
-    # also remove partially downloaded files on SIGINT/SIGTERM
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
+    # SIGTERM exits without running atexit handlers by default, so handle it like SIGINT
+    signal.signal(signal.SIGTERM, signal.default_int_handler)
 
     archive_num_images = get_num_images(ctx.session, search, collections)
     download_num_images = archive_num_images if limit == 0 else min(archive_num_images, limit)
@@ -193,7 +187,8 @@ def download(
         with ThreadPoolExecutor(max(10, os.cpu_count() or 10)) as thread_pool:
             for image_chunk in chunked(images_iterator, 100):
                 images.extend(image_chunk)
-                thread_pool.map(func, image_chunk)
+                # consume the results so a failed download raises instead of being ignored
+                list(thread_pool.map(func, image_chunk))
 
         headers, records = _extract_metadata(images)
         with (outdir / "metadata.csv").open("w", newline="", encoding="utf8") as outfile:
@@ -208,8 +203,8 @@ def download(
         licenses = {record["copyright_license"] for record in records}
         (outdir / "licenses").mkdir(exist_ok=True)
         for license_type in licenses:
-            with (outdir / "licenses" / f"{license_type}.txt").open("w") as outfile:
-                outfile.write(get_license(ctx.session, license_type))
+            license_text = get_license(ctx.session, license_type)
+            (outdir / "licenses" / f"{license_type}.txt").write_text(license_text, encoding="utf8")
 
     click.echo()
     click.secho(f"Successfully downloaded {nice_num_images} images to {outdir}/.", fg="green")

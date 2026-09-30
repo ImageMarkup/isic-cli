@@ -23,6 +23,10 @@ logger = logging.getLogger(__name__)
 
 def _parse_isic_ids(ctx, param, value) -> list[str]:
     isic_ids = {line.strip() for line in value.read().splitlines() if line.strip() != ""}
+    if not isic_ids:
+        click.secho("No ISIC IDs were provided.", err=True, fg="red")
+        sys.exit(1)
+
     for isic_id in isic_ids:
         if not re.match(r"^ISIC_\d{7}$", isic_id):
             click.secho(f'Found invalidly formatted ISIC ID: "{isic_id}"', err=True, fg="red")
@@ -41,7 +45,7 @@ def _table_from_summary(summary: dict[str, list[str]], nice_map: dict | None = N
 
     def examples(isic_ids: list) -> str:
         s = set(isic_ids)
-        ret = ", ".join(sorted(list(s)[:3]))
+        ret = ", ".join(sorted(s)[:3])
         if len(s) > 3:
             ret += ", etc."
         else:
@@ -54,7 +58,7 @@ def _table_from_summary(summary: dict[str, list[str]], nice_map: dict | None = N
 
     for k, v in summary.items():
         if k != "succeeded":  # already printed
-            table.add_row(nice_map[k], str(len(v)), examples(v))
+            table.add_row(nice_map.get(k, k), str(len(v)), examples(v))
 
     return table
 

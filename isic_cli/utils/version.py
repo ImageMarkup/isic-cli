@@ -5,6 +5,7 @@ import logging
 import sys
 
 import click
+from packaging.utils import parse_sdist_filename, parse_wheel_filename
 from packaging.version import Version
 import requests
 from requests.exceptions import RequestException
@@ -26,6 +27,8 @@ def is_dev_install():
 
 
 def upgrade_type(from_version: Version, to_version: Version) -> str | None:
+    if to_version <= from_version:
+        return None
     if to_version.major > from_version.major:
         return "major"
     if to_version.minor > from_version.minor:
@@ -34,14 +37,30 @@ def upgrade_type(from_version: Version, to_version: Version) -> str | None:
         return "micro"
 
 
-def _pypi_releases():
-    r = requests.get("https://pypi.org/pypi/isic-cli/json", timeout=(5, 5))
+def _pypi_files() -> list[dict]:
+    # https://peps.python.org/pep-0691/
+    r = requests.get(
+        "https://pypi.org/simple/isic-cli/",
+        headers={"Accept": "application/vnd.pypi.simple.v1+json"},
+        timeout=(5, 5),
+    )
     r.raise_for_status()
-    return r.json()["releases"]
+    return r.json()["files"]
+
+
+def _file_version(filename: str) -> Version:
+    if filename.endswith(".whl"):
+        return parse_wheel_filename(filename)[1]
+    return parse_sdist_filename(filename)[1]
 
 
 def newest_version_available() -> Version | None:
-    releases = [Version(v) for v in _pypi_releases()]
+    releases = [
+        _file_version(file["filename"])
+        for file in _pypi_files()
+        # yanked is optional, and is either a boolean or the reason the file was yanked
+        if not file.get("yanked")
+    ]
     real_releases = [x for x in releases if not x.is_prerelease and not x.is_devrelease]
     if real_releases:
         return sorted(real_releases)[-1]
